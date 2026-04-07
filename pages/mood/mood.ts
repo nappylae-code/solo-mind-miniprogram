@@ -21,12 +21,12 @@ function getTodayKey(): string {
 }
 
 function getDayOfWeekLabel(date: Date): string {
-  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
   return labels[(date.getDay() + 6) % 7];
 }
 
 function formatDateLabel(date: Date): string {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
   return `${months[date.getMonth()]} ${date.getDate()}`;
 }
 
@@ -212,7 +212,7 @@ Page({
         title: '提示',
         content: '请先选择今天的心情',
         showCancel: false,
-        confirmText: 'OK'
+        confirmText: '确定'
       });
       return;
     }
@@ -235,7 +235,7 @@ Page({
         title: '已保存！',
         content: '今天的心情已记录',
         showCancel: false,
-        confirmText: 'OK'
+        confirmText: '确定'
       });
     } catch (error) {
       console.error('Save error:', error);
@@ -243,7 +243,7 @@ Page({
         title: '错误',
         content: '保存失败，请重试',
         showCancel: false,
-        confirmText: 'OK'
+        confirmText: '确定'
       });
     }
   },

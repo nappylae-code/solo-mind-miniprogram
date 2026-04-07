@@ -1,12 +1,12 @@
 <view class="container">
   <scroll-view scroll-y class="scroll">
     <view class="wrapper">
-      <text class="title">Mood Check-In</text>
-      <text class="subtitle">Sign in to track your mood</text>
+      <text class="title">心情追踪</text>
+      <text class="subtitle">登录以追踪您的心情</text>
 
       <input
         class="input"
-        placeholder="Email"
+        placeholder="邮箱"
         placeholder-style="color: #9E9E9E;"
         value="{{email}}"
         bindinput="onEmailInput"
@@ -17,7 +17,7 @@
 
       <input
         class="input"
-        placeholder="Password"
+        placeholder="密码"
         placeholder-style="color: #9E9E9E;"
         value="{{password}}"
         bindinput="onPasswordInput"
@@ -31,11 +31,11 @@
         disabled="{{loading}}"
         loading="{{loading}}"
       >
-        Login
+        登录
       </button>
 
       <view class="register-link" bindtap="goToRegister">
-        <text class="register-text">Don't have an account? Register</text>
+        <text class="register-text">还没有账号？立即注册</text>
       </view>
     </view>
   </scroll-view>

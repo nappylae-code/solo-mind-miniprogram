@@ -78,7 +78,7 @@ Page({
       title,
       content: message,
       showCancel: false,
-      confirmText: 'OK'
+      confirmText: '确定'
     });
   }
 });

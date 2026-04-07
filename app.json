@@ -6,7 +6,7 @@
     "pages/mood/mood"
   ],
   "window": {
-    "navigationBarTitleText": "SoloMind",
+    "navigationBarTitleText": "心情追踪",
     "navigationBarBackgroundColor": "#4CAF50",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#FAFAFA",

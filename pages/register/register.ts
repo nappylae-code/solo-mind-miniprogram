@@ -28,22 +28,22 @@ Page({
     const confirmPassword = this.data.confirmPassword;
 
     if (!trimmedEmail || !password || !confirmPassword) {
-      this.showAlert('Error', 'Please fill in all fields.');
+      this.showAlert('错误', '请填写所有字段');
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      this.showAlert('Error', 'Please enter a valid email address.');
+      this.showAlert('错误', '请输入有效的邮箱地址');
       return;
     }
 
     if (password.length < 6) {
-      this.showAlert('Error', 'Password must be at least 6 characters.');
+      this.showAlert('错误', '密码至少需要6个字符');
       return;
     }
 
     if (password !== confirmPassword) {
-      this.showAlert('Error', 'Passwords do not match.');
+      this.showAlert('错误', '两次输入的密码不一致');
       return;
     }
 
@@ -56,10 +56,10 @@ Page({
 
       this.setData({ loading: false });
       wx.showModal({
-        title: 'Success',
-        content: 'Account created! You can now login.',
+        title: '成功',
+        content: '账号已创建！现在可以登录。',
         showCancel: false,
-        confirmText: 'OK',
+        confirmText: '确定',
         success: () => {
           wx.redirectTo({
             url: '/pages/login/login'
@@ -68,7 +68,7 @@ Page({
       });
     } catch (error) {
       console.error('Registration error:', error);
-      this.showAlert('Error', 'An error occurred during registration. Please try again.');
+      this.showAlert('错误', '注册过程中发生错误，请重试。');
       this.setData({ loading: false });
     }
   },
@@ -82,7 +82,7 @@ Page({
       title,
       content: message,
       showCancel: false,
-      confirmText: 'OK'
+      confirmText: '确定'
     });
   }
 });
