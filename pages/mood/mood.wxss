@@ -1,0 +1,169 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #FAFAFA;
+}
+
+.scroll-content {
+  flex: 1;
+  padding: 48rpx 32rpx;
+  padding-bottom: 40rpx;
+  box-sizing: border-box;
+}
+
+.header-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+.header {
+  font-size: 52rpx;
+  font-weight: 700;
+  color: #212121;
+  flex: 1;
+}
+
+.subheader {
+  display: block;
+  font-size: 32rpx;
+  color: #9E9E9E;
+  margin-top: 4rpx;
+  margin-bottom: 32rpx;
+}
+
+.logout-button {
+  margin: 0;
+  padding: 0;
+  min-width: auto;
+  font-size: 28rpx;
+  line-height: 1;
+  background-color: transparent;
+  color: #757575;
+  border: none;
+}
+
+.logout-button::after {
+  border: none;
+}
+
+/* Mood Grid */
+.mood-grid {
+  width: 100%;
+  white-space: nowrap;
+  margin-bottom: 32rpx;
+}
+
+.mood-row {
+  display: inline-flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 0 8rpx;
+}
+
+/* Note Section */
+.note-section {
+  margin-bottom: 48rpx;
+}
+
+.prompt {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #424242;
+  margin-bottom: 24rpx;
+}
+
+.text-input {
+  width: 100%;
+  min-height: 280rpx;
+  background-color: #FFF;
+  border: 2rpx solid #E0E0E0;
+  border-radius: 24rpx;
+  padding: 28rpx 32rpx;
+  font-size: 30rpx;
+  color: #212121;
+  box-sizing: border-box;
+}
+
+.text-input::placeholder {
+  color: #BDBDBD;
+}
+
+/* Week Section */
+.week-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32rpx;
+}
+
+.week-label {
+  font-size: 26rpx;
+  color: #9E9E9E;
+  margin-bottom: 20rpx;
+}
+
+.week-days {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 24rpx;
+}
+
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.week-day-label {
+  font-size: 22rpx;
+  color: #9E9E9E;
+  margin-bottom: 8rpx;
+}
+
+.week-day-circle {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  border: 4rpx solid #E0E0E0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+}
+
+.week-day-checked {
+  border-color: #4CAF50;
+  background-color: #4CAF50;
+}
+
+.week-day-check {
+  color: #FFF;
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+/* Streak */
+.streak {
+  display: block;
+  font-size: 30rpx;
+  text-align: center;
+  color: #757575;
+  margin-bottom: 32rpx;
+}
+
+/* Save Button */
+.save-button {
+  width: 100%;
+  margin-top: 16rpx;
+}
+
+.save-button::after {
+  border: none;
+}

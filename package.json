@@ -1,0 +1,14 @@
+{
+  "name": "solo-mind-miniprogram",
+  "version": "1.0.0",
+  "description": "SoloMind WeChat Mini Program",
+  "scripts": {
+    "build:miniprogram": "echo 'Use WeChat DevTools: Tool -> Build npm'"
+  },
+  "dependencies": {
+    "crypto-js": "^4.2.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Private"
+}

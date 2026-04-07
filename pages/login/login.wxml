@@ -1,0 +1,42 @@
+<view class="container">
+  <scroll-view scroll-y class="scroll">
+    <view class="wrapper">
+      <text class="title">Mood Check-In</text>
+      <text class="subtitle">Sign in to track your mood</text>
+
+      <input
+        class="input"
+        placeholder="Email"
+        placeholder-style="color: #9E9E9E;"
+        value="{{email}}"
+        bindinput="onEmailInput"
+        type="text"
+        auto-capitalize="none"
+        auto-focus="false"
+      />
+
+      <input
+        class="input"
+        placeholder="Password"
+        placeholder-style="color: #9E9E9E;"
+        value="{{password}}"
+        bindinput="onPasswordInput"
+        type="password"
+        auto-capitalize="none"
+      />
+
+      <button
+        class="btn-primary {{loading ? 'btn-disabled' : ''}}"
+        bindtap="handleLogin"
+        disabled="{{loading}}"
+        loading="{{loading}}"
+      >
+        Login
+      </button>
+
+      <view class="register-link" bindtap="goToRegister">
+        <text class="register-text">Don't have an account? Register</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>
