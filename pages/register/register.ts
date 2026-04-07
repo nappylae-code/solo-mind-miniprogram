@@ -7,6 +7,7 @@ Page({
     email: '',
     password: '',
     confirmPassword: '',
+    showPassword: false,
     loading: false
   },
 
@@ -20,6 +21,10 @@ Page({
 
   onConfirmPasswordInput(e: any) {
     this.setData({ confirmPassword: e.detail.value });
+  },
+
+  togglePasswordVisibility() {
+    this.setData({ showPassword: !this.data.showPassword });
   },
 
   async handleRegister() {

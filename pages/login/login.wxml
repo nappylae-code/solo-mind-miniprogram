@@ -1,7 +1,7 @@
 <view class="container">
   <scroll-view scroll-y class="scroll">
     <view class="wrapper">
-      <text class="title">心情追踪</text>
+      <text class="title">SoloMind</text>
       <text class="subtitle">登录以追踪您的心情</text>
 
       <input
@@ -15,15 +15,20 @@
         auto-focus="false"
       />
 
-      <input
-        class="input"
-        placeholder="密码"
-        placeholder-style="color: #9E9E9E;"
-        value="{{password}}"
-        bindinput="onPasswordInput"
-        type="password"
-        auto-capitalize="none"
-      />
+      <view class="input-with-button">
+        <input
+          class="input"
+          placeholder="密码"
+          placeholder-style="color: #9E9E9E;"
+          value="{{password}}"
+          bindinput="onPasswordInput"
+          type="{{showPassword ? 'text' : 'password'}}"
+          auto-capitalize="none"
+        />
+        <button class="toggle-password-btn" bindtap="togglePasswordVisibility">
+          {{showPassword ? '隐藏' : '显示'}}
+        </button>
+      </view>
 
       <button
         class="btn-primary {{loading ? 'btn-disabled' : ''}}"
