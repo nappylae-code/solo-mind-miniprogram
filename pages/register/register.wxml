@@ -1,0 +1,51 @@
+<view class="container">
+  <scroll-view scroll-y class="scroll">
+    <view class="wrapper">
+      <text class="title">Create Account</text>
+      <text class="subtitle">Register to get started</text>
+
+      <input
+        class="input"
+        placeholder="Email"
+        placeholder-style="color: #9E9E9E;"
+        value="{{email}}"
+        bindinput="onEmailInput"
+        type="text"
+        auto-capitalize="none"
+      />
+
+      <input
+        class="input"
+        placeholder="Password"
+        placeholder-style="color: #9E9E9E;"
+        value="{{password}}"
+        bindinput="onPasswordInput"
+        type="password"
+        auto-capitalize="none"
+      />
+
+      <input
+        class="input"
+        placeholder="Confirm Password"
+        placeholder-style="color: #9E9E9E;"
+        value="{{confirmPassword}}"
+        bindinput="onConfirmPasswordInput"
+        type="password"
+        auto-capitalize="none"
+      />
+
+      <button
+        class="btn-primary {{loading ? 'btn-disabled' : ''}}"
+        bindtap="handleRegister"
+        disabled="{{loading}}"
+        loading="{{loading}}"
+      >
+        {{loading ? 'Creating...' : 'Register'}}
+      </button>
+
+      <view class="back-link" bindtap="goBack">
+        <text class="back-text">Already have an account? Login</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>

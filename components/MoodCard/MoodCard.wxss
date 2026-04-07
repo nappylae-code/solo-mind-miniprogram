@@ -1,0 +1,55 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12rpx;
+  margin: 0 4rpx;
+  flex: 1;
+  flex-shrink: 0;
+  min-height: 160rpx;
+  border-radius: 24rpx;
+  border-width: 2rpx;
+  border-color: #E0E0E0;
+  background-color: #FFF;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.card.selected {
+  border-width: 4rpx;
+}
+
+.check-badge {
+  position: absolute;
+  top: 2rpx;
+  right: 2rpx;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 16rpx;
+  background-color: #4CAF50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-width: 3rpx;
+  border-color: #FFF;
+  box-sizing: border-box;
+}
+
+.check-icon {
+  color: #FFF;
+  font-size: 18rpx;
+  font-weight: bold;
+  line-height: 22rpx;
+}
+
+.emoji {
+  font-size: 56rpx;
+  margin-bottom: 4rpx;
+}
+
+.label {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #424242;
+}

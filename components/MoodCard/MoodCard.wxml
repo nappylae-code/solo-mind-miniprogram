@@ -1,0 +1,11 @@
+<view
+  class="card {{selected ? 'selected' : ''}}"
+  style="border-color: {{selected ? mood.color : '#E0E0E0'}};"
+  bindtap="onTap"
+>
+  <view class="check-badge" wx:if="{{selected}}">
+    <text class="check-icon">✓</text>
+  </view>
+  <text class="emoji">{{mood.emoji}}</text>
+  <text class="label">{{mood.label}}</text>
+</view>

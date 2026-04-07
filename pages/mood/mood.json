@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "Mood Check-In",
+  "usingComponents": {
+    "MoodCard": "/components/MoodCard/MoodCard"
+  }
+}

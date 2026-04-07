@@ -1,0 +1,120 @@
+/**app.wxss**/
+page {
+  background-color: #FAFAFA;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #212121;
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+
+/* Global utility classes */
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Button styles */
+.btn-primary {
+  background-color: #4CAF50;
+  color: #FFFFFF;
+  border-radius: 12rpx;
+  padding: 28rpx 32rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  text-align: center;
+}
+
+.btn-primary:active {
+  opacity: 0.8;
+}
+
+.btn-primary[disabled] {
+  opacity: 0.6;
+}
+
+/* Input styles */
+.input {
+  background-color: #FFFFFF;
+  border-radius: 12rpx;
+  border: 1px solid #E0E0E0;
+  padding: 28rpx 32rpx;
+  font-size: 32rpx;
+  color: #212121;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  border-color: #4CAF50;
+}
+
+.input::placeholder {
+  color: #9E9E9E;
+}
+
+/* Text styles */
+.text-primary {
+  color: #212121;
+}
+
+.text-secondary {
+  color: #757575;
+}
+
+.text-muted {
+  color: #9E9E9E;
+}
+
+.text-success {
+  color: #4CAF50;
+}
+
+/* Spacing utilities */
+.p-24 {
+  padding: 24px;
+}
+
+.px-24 {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.py-16 {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.mb-16 {
+  margin-bottom: 16px;
+}
+
+.mt-24 {
+  margin-top: 24px;
+}
+
+.mb-24 {
+  margin-bottom: 24px;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
