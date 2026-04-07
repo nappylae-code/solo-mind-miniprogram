@@ -3,7 +3,7 @@
     <!-- Header -->
     <view class="header-row">
       <text class="header">今日心情</text>
-      <button class="logout-button" bindtap="handleLogout" size="mini">Logout</button>
+      <button class="logout-button" bindtap="handleLogout" size="mini">退出登录</button>
     </view>
     <text class="subheader">每天只需要15秒</text>
 

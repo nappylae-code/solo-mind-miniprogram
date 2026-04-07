@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "Mood Check-In",
+  "navigationBarTitleText": "今日心情",
   "usingComponents": {
     "MoodCard": "/components/MoodCard/MoodCard"
   }

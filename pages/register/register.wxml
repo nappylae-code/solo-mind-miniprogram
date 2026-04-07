@@ -1,12 +1,12 @@
 <view class="container">
   <scroll-view scroll-y class="scroll">
     <view class="wrapper">
-      <text class="title">Create Account</text>
-      <text class="subtitle">Register to get started</text>
+      <text class="title">创建账号</text>
+      <text class="subtitle">注册开始使用</text>
 
       <input
         class="input"
-        placeholder="Email"
+        placeholder="邮箱"
         placeholder-style="color: #9E9E9E;"
         value="{{email}}"
         bindinput="onEmailInput"
@@ -16,7 +16,7 @@
 
       <input
         class="input"
-        placeholder="Password"
+        placeholder="密码"
         placeholder-style="color: #9E9E9E;"
         value="{{password}}"
         bindinput="onPasswordInput"
@@ -26,7 +26,7 @@
 
       <input
         class="input"
-        placeholder="Confirm Password"
+        placeholder="确认密码"
         placeholder-style="color: #9E9E9E;"
         value="{{confirmPassword}}"
         bindinput="onConfirmPasswordInput"
@@ -40,11 +40,11 @@
         disabled="{{loading}}"
         loading="{{loading}}"
       >
-        {{loading ? 'Creating...' : 'Register'}}
+        {{loading ? '创建中...' : '注册'}}
       </button>
 
       <view class="back-link" bindtap="goBack">
-        <text class="back-text">Already have an account? Login</text>
+        <text class="back-text">已有账号？登录</text>
       </view>
     </view>
   </scroll-view>
