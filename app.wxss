@@ -40,8 +40,10 @@ page {
   background-color: #FFFFFF;
   border-radius: 12rpx;
   border: 1px solid #E0E0E0;
-  padding: 28rpx 32rpx;
-  font-size: 32rpx;
+  height: 96rpx;
+  padding: 20rpx 32rpx;
+  font-size: 30rpx;
+  line-height: 1.4;
   color: #212121;
   width: 100%;
   box-sizing: border-box;

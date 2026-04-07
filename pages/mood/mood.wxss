@@ -7,8 +7,8 @@
 
 .scroll-content {
   flex: 1;
-  padding: 48rpx 32rpx;
-  padding-bottom: 40rpx;
+  padding: 24rpx 32rpx;
+  padding-bottom: 24rpx;
   box-sizing: border-box;
 }
 
@@ -29,10 +29,10 @@
 
 .subheader {
   display: block;
-  font-size: 32rpx;
+  font-size: 28rpx;
   color: #9E9E9E;
   margin-top: 4rpx;
-  margin-bottom: 32rpx;
+  margin-bottom: 24rpx;
 }
 
 .logout-button {
@@ -54,7 +54,7 @@
 .mood-grid {
   width: 100%;
   white-space: nowrap;
-  margin-bottom: 32rpx;
+  margin-bottom: 24rpx;
 }
 
 .mood-row {
@@ -67,7 +67,7 @@
 
 /* Note Section */
 .note-section {
-  margin-bottom: 48rpx;
+  margin-bottom: 32rpx;
 }
 
 .prompt {
@@ -80,12 +80,13 @@
 
 .text-input {
   width: 100%;
-  min-height: 280rpx;
+  min-height: 400rpx;
   background-color: #FFF;
   border: 2rpx solid #E0E0E0;
   border-radius: 24rpx;
-  padding: 28rpx 32rpx;
-  font-size: 30rpx;
+  padding: 24rpx 32rpx;
+  font-size: 28rpx;
+  line-height: 1.5;
   color: #212121;
   box-sizing: border-box;
 }
@@ -99,7 +100,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 32rpx;
+  margin-bottom: 24rpx;
 }
 
 .week-label {
@@ -152,10 +153,10 @@
 /* Streak */
 .streak {
   display: block;
-  font-size: 30rpx;
+  font-size: 28rpx;
   text-align: center;
   color: #757575;
-  margin-bottom: 32rpx;
+  margin-bottom: 24rpx;
 }
 
 /* Save Button */
