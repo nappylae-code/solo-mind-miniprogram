@@ -46,6 +46,36 @@
   box-sizing: border-box;
 }
 
+.input-with-button {
+  position: relative;
+  margin-bottom: 32rpx;
+  width: 100%;
+}
+
+.input-with-button .input {
+  width: 100%;
+  padding-right: 120rpx;
+  box-sizing: border-box;
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 16rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #4CAF50;
+  font-size: 28rpx;
+  padding: 8rpx 16rpx;
+  line-height: 1;
+  min-width: 80rpx;
+}
+
+.toggle-password-btn::after {
+  border: none;
+}
+
 .input:focus {
   border-color: #4CAF50;
 }

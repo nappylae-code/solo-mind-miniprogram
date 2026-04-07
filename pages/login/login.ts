@@ -9,6 +9,7 @@ Page({
   data: {
     email: '',
     password: '',
+    showPassword: false,
     loading: false
   },
 
@@ -18,6 +19,10 @@ Page({
 
   onPasswordInput(e: any) {
     this.setData({ password: e.detail.value });
+  },
+
+  togglePasswordVisibility() {
+    this.setData({ showPassword: !this.data.showPassword });
   },
 
   async handleLogin() {

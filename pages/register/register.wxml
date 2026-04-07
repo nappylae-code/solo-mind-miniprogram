@@ -14,15 +14,20 @@
         auto-capitalize="none"
       />
 
-      <input
-        class="input"
-        placeholder="密码"
-        placeholder-style="color: #9E9E9E;"
-        value="{{password}}"
-        bindinput="onPasswordInput"
-        type="password"
-        auto-capitalize="none"
-      />
+      <view class="input-with-button">
+        <input
+          class="input"
+          placeholder="密码"
+          placeholder-style="color: #9E9E9E;"
+          value="{{password}}"
+          bindinput="onPasswordInput"
+          type="{{showPassword ? 'text' : 'password'}}"
+          auto-capitalize="none"
+        />
+        <button class="toggle-password-btn" bindtap="togglePasswordVisibility">
+          {{showPassword ? '隐藏' : '显示'}}
+        </button>
+      </view>
 
       <input
         class="input"
@@ -30,7 +35,7 @@
         placeholder-style="color: #9E9E9E;"
         value="{{confirmPassword}}"
         bindinput="onConfirmPasswordInput"
-        type="password"
+        type="{{showPassword ? 'text' : 'password'}}"
         auto-capitalize="none"
       />
 
