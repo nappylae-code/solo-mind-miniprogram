@@ -45,7 +45,10 @@
     "disableUseStrict": false,
     "minifyWXML": true,
     "showES6CompileOption": false,
-    "useCompilerPlugins": false,
+    "useCompilerPlugins": [
+      "typescript",
+      "sass"
+    ],
     "compileWorklet": false,
     "localPlugins": false,
     "condition": false,

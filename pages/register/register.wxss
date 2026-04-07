@@ -12,7 +12,7 @@
 
 .scroll .wrapper {
   flex: 1;
-  padding: 48rpx 48rpx;
+  padding: 32rpx 32rpx;
   display: flex;
   flex-direction: column;
 }
@@ -26,18 +26,20 @@
 }
 
 .subtitle {
-  font-size: 32rpx;
+  font-size: 28rpx;
   text-align: center;
   color: #757575;
-  margin-bottom: 80rpx;
+  margin-bottom: 48rpx;
 }
 
 .input {
   background-color: #FFFFFF;
   border-radius: 24rpx;
   border: 2rpx solid #E0E0E0;
-  padding: 28rpx 32rpx;
-  font-size: 32rpx;
+  height: 96rpx;
+  padding: 20rpx 32rpx;
+  font-size: 30rpx;
+  line-height: 1.4;
   color: #212121;
   margin-bottom: 32rpx;
   width: 100%;
@@ -72,7 +74,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 40rpx;
+  margin-top: 16rpx;
 }
 
 .back-text {
