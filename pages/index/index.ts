@@ -18,7 +18,7 @@ Page({
       const userId = wx.getStorageSync('userId');
       if (userId) {
         // Already have user, go to mood page
-        wx.redirectTo({
+        wx.switchTab({
           url: '/pages/mood/mood'
         });
         return;
@@ -42,7 +42,7 @@ Page({
           wx.setStorageSync('userAvatarUrl', userInfo.avatarUrl);
           wx.setStorageSync('isLoggedIn', true);
 
-          wx.redirectTo({
+          wx.switchTab({
             url: '/pages/mood/mood'
           });
         } catch (error) {
