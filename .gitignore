@@ -28,3 +28,6 @@ yarn-error.log
 # Misc
 .project
 .idea
+
+# Terminal Paste Image folder
+.cp-images/
