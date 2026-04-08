@@ -62,7 +62,7 @@ App<IAppOption>({
   },
 
   globalData: {
-    userEmail: null as string | null,
+    userId: null as string | null,
     isLoggedIn: false
   }
 })

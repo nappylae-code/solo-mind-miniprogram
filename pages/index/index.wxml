@@ -1,3 +1,10 @@
 <view class="container">
-  <text class="loading-text">Loading...</text>
+  <view class="content">
+    <text class="title">欢迎使用 SoloMind</text>
+    <text class="subtitle">使用微信身份来记录您的心情</text>
+
+    <button class="btn-primary" bindtap="onUseWeChat">
+      使用微信身份注册
+    </button>
+  </view>
 </view>
