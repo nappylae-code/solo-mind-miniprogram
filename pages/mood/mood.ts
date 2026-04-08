@@ -1,7 +1,7 @@
 import { getSecureItem, saveSecureItem, deleteSecureItem } from '../../utils/encryption';
 import { MOODS, getMoodByKey, MoodType } from '../../constants/mood';
 
-const USER_EMAIL_KEY = 'userEmail';
+const USER_ID_KEY = 'userId';
 const LOGGED_IN_KEY = 'isLoggedIn';
 const MOOD_DATA_KEY = 'moodData';
 
@@ -40,7 +40,9 @@ function startOfWeek(date: Date): Date {
 
 Page({
   data: {
-    email: null as string | null,
+    userId: null as string | null,
+    userNickname: null as string | null,
+    userAvatarUrl: null as string | null,
     ready: false,
     MOODS: [] as MoodType[],
     moodEntries: {} as Record<string, MoodEntry>,
@@ -62,13 +64,15 @@ Page({
 
   async loadData() {
     try {
-      const email = wx.getStorageSync(USER_EMAIL_KEY);
-      if (!email) {
+      const userId = wx.getStorageSync(USER_ID_KEY);
+      if (!userId) {
         this.setData({ ready: true });
-        wx.redirectTo({ url: '/pages/login/login' });
+        wx.redirectTo({ url: '/pages/index/index' });
         return;
       }
-      this.setData({ email });
+      const userNickname = wx.getStorageSync('userNickname') || null;
+      const userAvatarUrl = wx.getStorageSync('userAvatarUrl') || null;
+      this.setData({ userId, userNickname, userAvatarUrl });
 
       const encryptedData = await getSecureItem(MOOD_DATA_KEY);
       if (encryptedData) {
@@ -90,7 +94,7 @@ Page({
           }
 
           // Clean up old email-specific key (for backward compatibility)
-          await deleteSecureItem('moodData_' + email);
+          await deleteSecureItem('moodData_' + userId);
 
           this.setData({ moodEntries: entries });
         } catch (err) {
@@ -248,21 +252,4 @@ Page({
     }
   },
 
-  handleLogout() {
-    wx.showModal({
-      title: '确认退出',
-      content: '确定要退出登录吗？',
-      confirmText: '退出',
-      cancelText: '取消',
-      success: (res) => {
-        if (res.confirm) {
-          wx.removeStorageSync(LOGGED_IN_KEY);
-          wx.removeStorageSync(USER_EMAIL_KEY);
-          wx.redirectTo({
-            url: '/pages/login/login'
-          });
-        }
-      }
-    });
-  }
 });
