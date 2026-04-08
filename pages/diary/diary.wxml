@@ -1,0 +1,7 @@
+<view class="container">
+  <view class="placeholder">
+    <text class="emoji">📔</text>
+    <text class="title">日记功能</text>
+    <text class="description">此功能正在开发中...</text>
+  </view>
+</view>
