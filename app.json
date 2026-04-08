@@ -1,7 +1,10 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/mood/mood"
+    "pages/mood/mood",
+    "pages/diary/diary",
+    "pages/community/community",
+    "pages/profile/profile"
   ],
   "window": {
     "navigationBarTitleText": "SoloMind",
@@ -9,6 +12,38 @@
     "navigationBarTextStyle": "white",
     "backgroundColor": "#FAFAFA",
     "enablePullDownRefresh": false
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#4CAF50",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/mood/mood",
+        "text": "首页",
+        "iconPath": "images/home.png",
+        "selectedIconPath": "images/home-active.png"
+      },
+      {
+        "pagePath": "pages/diary/diary",
+        "text": "日记",
+        "iconPath": "images/diary.png",
+        "selectedIconPath": "images/diary-active.png"
+      },
+      {
+        "pagePath": "pages/community/community",
+        "text": "社区",
+        "iconPath": "images/community.png",
+        "selectedIconPath": "images/community-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "images/profile.png",
+        "selectedIconPath": "images/profile-active.png"
+      }
+    ]
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"
