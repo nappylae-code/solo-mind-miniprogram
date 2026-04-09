@@ -1,9 +1,5 @@
 declare const wx: any;
 
-// ============================================
-// Generate a cryptographically secure UUID v4
-// Using wx.getRandomValues instead of Math.random()
-// ============================================
 function generateUUID(): string {
   const array = new Uint8Array(16);
 
@@ -17,9 +13,7 @@ function generateUUID(): string {
     }
   });
 
-  // Set version to 4 (UUID v4)
   array[6] = (array[6] & 0x0f) | 0x40;
-  // Set variant bits
   array[8] = (array[8] & 0x3f) | 0x80;
 
   const hex = Array.from(array).map(b => b.toString(16).padStart(2, '0'));
@@ -34,15 +28,16 @@ function generateUUID(): string {
 }
 
 Page({
-  data: {},
+  data: {
+    avatarUrl: '',
+    nickname: ''
+  },
 
   onShow() {
     try {
       const userId = wx.getStorageSync('userId');
       if (userId) {
-        wx.switchTab({
-          url: '/pages/mood/mood'
-        });
+        wx.switchTab({ url: '/pages/mood/mood' });
         return;
       }
     } catch (error) {
@@ -50,49 +45,55 @@ Page({
     }
   },
 
-  onUseWeChat() {
-    wx.getUserProfile({
-      desc: '用于完善会员资料',
-      success: (res: any) => {
-        const userInfo = res.userInfo;
-        const userId = generateUUID();
+  // Called when user picks an avatar
+  onChooseAvatar(e: any) {
+    const { avatarUrl } = e.detail;
+    this.setData({ avatarUrl });
+  },
 
-        try {
-          wx.setStorageSync('userId', userId);
-          wx.setStorageSync('userNickname', userInfo.nickName);
-          wx.setStorageSync('userAvatarUrl', userInfo.avatarUrl);
-          wx.setStorageSync('isLoggedIn', true);
+  // Called when user types in nickname input
+  onNicknameInput(e: any) {
+    this.setData({ nickname: e.detail.value });
+  },
 
-          wx.switchTab({
-            url: '/pages/mood/mood'
-          });
-        } catch (error) {
-          wx.showModal({
-            title: '错误',
-            content: '保存用户信息失败',
-            showCancel: false,
-            confirmText: '确定'
-          });
-        }
-      },
-      fail: () => {
-        wx.showModal({
-          title: '取消授权',
-          content: '您取消了授权，无法使用本小程序。',
-          showCancel: false,
-          confirmText: '确定'
-        });
-      }
-    });
+  // Also capture nickname on blur (WeChat fills it on blur)
+  onNicknameBlur(e: any) {
+    this.setData({ nickname: e.detail.value });
+  },
+
+  // Called when user taps "进入 SoloMind"
+  onConfirm() {
+    const { avatarUrl, nickname } = this.data;
+
+    if (!nickname || nickname.trim() === '') {
+      wx.showToast({ title: '请填写昵称', icon: 'none' });
+      return;
+    }
+
+    const userId = generateUUID();
+
+    try {
+      wx.setStorageSync('userId', userId);
+      wx.setStorageSync('userNickname', nickname.trim());
+      wx.setStorageSync('userAvatarUrl', avatarUrl);
+      wx.setStorageSync('isLoggedIn', true);
+
+      wx.switchTab({ url: '/pages/mood/mood' });
+    } catch (error) {
+      wx.showModal({
+        title: '错误',
+        content: '保存用户信息失败',
+        showCancel: false,
+        confirmText: '确定'
+      });
+    }
   },
 
   onExitMiniProgram() {
     try {
       wx.exitMiniProgram();
     } catch (error) {
-      wx.redirectTo({
-        url: '/pages/index/index'
-      });
+      wx.redirectTo({ url: '/pages/index/index' });
     }
   }
 });
