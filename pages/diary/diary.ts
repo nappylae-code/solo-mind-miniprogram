@@ -196,4 +196,6 @@ Page({
   onUnlockMore() {
     wx.showToast({ title: '会员功能即将开放', icon: 'none' });
   },
+
 });
+
