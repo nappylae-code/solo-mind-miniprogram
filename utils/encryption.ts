@@ -139,9 +139,3 @@ export async function deleteSecureItem(key: string): Promise<void> {
   }
 }
 
-// ============================================
-// SHA256 hash utility
-// ============================================
-export function sha256(data: string): string {
-  return CryptoJS.SHA256(data).toString();
-}
