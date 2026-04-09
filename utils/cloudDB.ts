@@ -57,6 +57,21 @@ export async function saveMoodToCloud(entry: CloudMoodEntry): Promise<boolean> {
         }
       });
     }
+
+    // Update local cache after successful cloud save
+    try {
+      const cached = wx.getStorageSync(LOCAL_CACHE_KEY);
+      const entries = cached ? JSON.parse(cached) : {};
+      entries[entry.date] = {
+        timestamp: entry.timestamp,
+        moodKey: entry.moodKey,
+        note: entry.note || undefined
+      };
+      wx.setStorageSync(LOCAL_CACHE_KEY, JSON.stringify(entries));
+    } catch (e) {
+      // ignore cache update error
+    }
+    
     return true;
   } catch (error) {
     return false;
@@ -67,6 +82,8 @@ export async function saveMoodToCloud(entry: CloudMoodEntry): Promise<boolean> {
 // Get all mood entries for a user
 // Returns entries as a Record<date, entry> map
 // ============================================
+const LOCAL_CACHE_KEY = 'moodEntriesCache';
+
 export async function loadMoodFromCloud(
   userId: string
 ): Promise<Record<string, { timestamp: number; moodKey: string; note?: string }>> {
@@ -88,8 +105,21 @@ export async function loadMoodFromCloud(
         };
       }
     }
+
+    // Cache the latest cloud data locally for offline use
+    wx.setStorageSync(LOCAL_CACHE_KEY, JSON.stringify(entries));
     return entries;
+
   } catch (error) {
+    // Cloud unavailable — try local cache as fallback
+    try {
+      const cached = wx.getStorageSync(LOCAL_CACHE_KEY);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (e) {
+      // ignore cache error
+    }
     return {};
   }
 }
