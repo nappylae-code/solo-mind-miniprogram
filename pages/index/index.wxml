@@ -1,10 +1,37 @@
 <view class="container">
   <view class="content">
     <text class="title">欢迎使用 SoloMind</text>
-    <text class="subtitle">使用微信身份来记录您的心情</text>
+    <text class="subtitle">设置您的头像和昵称</text>
 
-    <button class="btn-primary" bindtap="onUseWeChat">
-      使用微信身份注册
+    <!-- Step 1: Choose Avatar -->
+    <button
+      class="avatar-btn"
+      open-type="chooseAvatar"
+      bind:chooseavatar="onChooseAvatar"
+    >
+      <image
+        class="avatar-preview"
+        src="{{avatarUrl || '/images/profile.png'}}"
+        mode="aspectFill"
+      />
+      <text class="avatar-hint">点击选择头像</text>
+    </button>
+
+    <!-- Step 2: Enter Nickname -->
+    <view class="nickname-wrap">
+      <input
+        class="nickname-input"
+        type="nickname"
+        placeholder="点击填写昵称"
+        value="{{nickname}}"
+        bindinput="onNicknameInput"
+        bindblur="onNicknameBlur"
+      />
+    </view>
+
+    <!-- Step 3: Enter -->
+    <button class="btn-primary" bindtap="onConfirm">
+      进入 SoloMind
     </button>
   </view>
 </view>
