@@ -8,19 +8,15 @@ declare const wx: any;
 function generateUUID(): string {
   const array = new Uint8Array(16);
 
-  // Use synchronous crypto.getRandomValues
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
     crypto.getRandomValues(array);
   } else {
-    // Safe fallback using Math.random()
     for (let i = 0; i < 16; i++) {
       array[i] = Math.floor(Math.random() * 256);
     }
   }
 
-  // Set version to 4 (UUID v4)
   array[6] = (array[6] & 0x0f) | 0x40;
-  // Set variant bits
   array[8] = (array[8] & 0x3f) | 0x80;
 
   const hex = Array.from(array).map(b => b.toString(16).padStart(2, '0'));
@@ -37,7 +33,8 @@ function generateUUID(): string {
 Page({
   data: {
     avatarUrl: '',
-    nickname: ''
+    nickname: '',
+    loading: false   // ✅ new: tracks saving state
   },
 
   onShow() {
@@ -66,23 +63,36 @@ Page({
   },
 
   onConfirm() {
-    const { avatarUrl, nickname } = this.data;
+    const { avatarUrl, nickname, loading } = this.data;
+
+    // ✅ Prevent double tap
+    if (loading) return;
 
     if (!nickname || nickname.trim() === '') {
       wx.showToast({ title: '请填写昵称', icon: 'none' });
       return;
     }
 
-    const userId = generateUUID();
+    // ✅ Show loading state
+    this.setData({ loading: true });
+    wx.showLoading({ title: '正在进入...' });
 
     try {
+      const userId = generateUUID();
+
       wx.setStorageSync('userId', userId);
       wx.setStorageSync('userNickname', nickname.trim());
       wx.setStorageSync('userAvatarUrl', avatarUrl);
       wx.setStorageSync('isLoggedIn', true);
 
+      // ✅ Hide loading then navigate
+      wx.hideLoading();
       wx.switchTab({ url: '/pages/mood/mood' });
+
     } catch (error) {
+      // ✅ Hide loading on error too
+      wx.hideLoading();
+      this.setData({ loading: false });
       wx.showModal({
         title: '错误',
         content: '保存用户信息失败',
