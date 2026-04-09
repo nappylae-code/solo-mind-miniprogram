@@ -1,8 +1,9 @@
-import { getSecureItem, saveSecureItem, deleteSecureItem } from '../../utils/encryption';
 import { MOODS, getMoodByKey, MoodType } from '../../constants/mood';
+import { saveMoodToCloud, loadMoodFromCloud } from '../../utils/cloudDB';
+
+declare const wx: any;
 
 const USER_ID_KEY = 'userId';
-const MOOD_DATA_KEY = 'moodData';
 const NOTE_MAX_LENGTH = 500;
 
 interface MoodEntry {
@@ -26,7 +27,8 @@ function getDayOfWeekLabel(date: Date): string {
 }
 
 function formatDateLabel(date: Date): string {
-  const months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+  const months = ['一月', '二月', '三月', '四月', '五月', '六月',
+    '七月', '八月', '九月', '十月', '十一月', '十二月'];
   return `${months[date.getMonth()]} ${date.getDate()}`;
 }
 
@@ -70,44 +72,23 @@ Page({
         wx.redirectTo({ url: '/pages/index/index' });
         return;
       }
+
       const userNickname = wx.getStorageSync('userNickname') || null;
       const userAvatarUrl = wx.getStorageSync('userAvatarUrl') || null;
       this.setData({ userId, userNickname, userAvatarUrl });
 
-      const encryptedData = await getSecureItem(MOOD_DATA_KEY);
-      if (encryptedData) {
-        try {
-          const parsed = JSON.parse(encryptedData);
-          let entries: Record<string, MoodEntry>;
+      // Load mood entries from Cloud DB
+      wx.showLoading({ title: '加载中...' });
+      const entries = await loadMoodFromCloud(userId);
+      wx.hideLoading();
 
-          if (Array.isArray(parsed)) {
-            // Migrate old array format to object format
-            entries = {};
-            for (const entry of parsed) {
-              const d = new Date(entry.timestamp);
-              const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-              entries[dateKey] = { timestamp: entry.timestamp, moodKey: entry.moodKey };
-            }
-            await saveSecureItem(MOOD_DATA_KEY, JSON.stringify(entries));
-          } else {
-            entries = parsed;
-          }
-
-          // Clean up old email-specific key (for backward compatibility)
-          await deleteSecureItem('moodData_' + userId);
-
-          this.setData({ moodEntries: entries });
-        } catch (err) {
-          this.setData({ moodEntries: {} });
-        }
-      } else {
-        this.setData({ moodEntries: {} });
-      }
-
+      this.setData({ moodEntries: entries });
       this.computeWeekData();
       this.syncTodayEntry();
       this.setData({ ready: true });
+
     } catch (error) {
+      wx.hideLoading();
       this.setData({ ready: true });
     }
   },
@@ -117,17 +98,14 @@ Page({
     const now = new Date();
     let weekStart = startOfWeek(now);
 
-    // Build current week days
     let currentWeekDays: Array<{ label: string; hasEntry: boolean }> = [];
     for (let i = 0; i < 7; i++) {
       const d = new Date(weekStart);
       d.setDate(d.getDate() + i);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const hasEntry = !!moodEntries[key];
-      currentWeekDays.push({ label: getDayOfWeekLabel(d), hasEntry });
+      currentWeekDays.push({ label: getDayOfWeekLabel(d), hasEntry: !!moodEntries[key] });
     }
 
-    // If no entries in current week, look at next week
     const foundInWeek = currentWeekDays.some(day => day.hasEntry);
     if (!foundInWeek) {
       const nextWeekStart = new Date(weekStart);
@@ -138,9 +116,7 @@ Page({
         const d = new Date(nextWeekStart);
         d.setDate(d.getDate() + i);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        if (moodEntries[key]) {
-          foundNext = true;
-        }
+        if (moodEntries[key]) foundNext = true;
         nextWeekDays.push({ label: getDayOfWeekLabel(d), hasEntry: !!moodEntries[key] });
       }
       if (foundNext) {
@@ -169,11 +145,7 @@ Page({
       }
     }
 
-    this.setData({
-      weekDays: currentWeekDays,
-      weekLabel,
-      streak
-    });
+    this.setData({ weekDays: currentWeekDays, weekLabel, streak });
   },
 
   syncTodayEntry() {
@@ -205,7 +177,6 @@ Page({
 
   onNoteInput(e: WechatMiniprogram.Input) {
     const value = e.detail.value;
-    // Enforce max length and trim leading whitespace
     if (value.length > NOTE_MAX_LENGTH) {
       this.setData({ note: value.slice(0, NOTE_MAX_LENGTH) });
       wx.showToast({
@@ -219,7 +190,7 @@ Page({
   },
 
   async handleSave() {
-    const { selectedMood, note, moodEntries } = this.data;
+    const { selectedMood, note, moodEntries, userId } = this.data;
     if (!selectedMood) {
       wx.showModal({
         title: '提示',
@@ -231,17 +202,27 @@ Page({
     }
 
     const todayKey = getTodayKey();
-    const updated = {
-      ...moodEntries,
-      [todayKey]: {
-        timestamp: Date.now(),
-        moodKey: selectedMood,
-        note: note.trim() || undefined
-      }
-    };
 
-    try {
-      await saveSecureItem(MOOD_DATA_KEY, JSON.stringify(updated));
+    // Save to Cloud DB
+    wx.showLoading({ title: '保存中...' });
+    const success = await saveMoodToCloud({
+      userId: userId!,
+      date: todayKey,
+      moodKey: selectedMood,
+      note: note.trim(),
+      timestamp: Date.now()
+    });
+    wx.hideLoading();
+
+    if (success) {
+      const updated = {
+        ...moodEntries,
+        [todayKey]: {
+          timestamp: Date.now(),
+          moodKey: selectedMood,
+          note: note.trim() || undefined
+        }
+      };
       this.setData({ moodEntries: updated });
       this.computeWeekData();
       wx.showModal({
@@ -250,14 +231,13 @@ Page({
         showCancel: false,
         confirmText: '确定'
       });
-    } catch (error) {
+    } else {
       wx.showModal({
         title: '错误',
-        content: '保存失败，请重试',
+        content: '保存失败，请检查网络后重试',
         showCancel: false,
         confirmText: '确定'
       });
     }
-  },
-
+  }
 });
