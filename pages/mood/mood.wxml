@@ -44,7 +44,7 @@
         value="{{note}}"
         bindinput="onNoteInput"
         maxlength="500"
-        auto-height
+        show-count="{{false}}"
       />
 
       <!-- Save Button -->
