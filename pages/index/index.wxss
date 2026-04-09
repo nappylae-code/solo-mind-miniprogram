@@ -1,3 +1,4 @@
+/* ===== Container ===== */
 .container {
   display: flex;
   align-items: center;
@@ -10,26 +11,82 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 64rpx 32rpx;
+  padding: 64rpx 48rpx;
   width: 100%;
   box-sizing: border-box;
 }
 
+/* ===== Title ===== */
 .title {
-  font-size: 56rpx;
+  font-size: 52rpx;
   font-weight: 700;
   color: #212121;
   text-align: center;
-  margin-bottom: 24rpx;
+  margin-bottom: 16rpx;
 }
 
 .subtitle {
   font-size: 28rpx;
   color: #757575;
   text-align: center;
-  margin-bottom: 80rpx;
+  margin-bottom: 56rpx;
 }
 
+/* ===== Avatar Button ===== */
+.avatar-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 32rpx;
+  width: auto;
+}
+
+.avatar-btn::after {
+  border: none;
+}
+
+.avatar-preview {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  border: 4rpx solid #E0E0E0;
+  background-color: #F5F5F5;
+  margin-bottom: 16rpx;
+}
+
+.avatar-hint {
+  font-size: 26rpx;
+  color: #4CAF50;
+  font-weight: 500;
+}
+
+/* ===== Nickname Input ===== */
+.nickname-wrap {
+  width: 100%;
+  background-color: #FFFFFF;
+  border-radius: 16rpx;
+  border: 2rpx solid #E0E0E0;
+  padding: 0 32rpx;
+  box-sizing: border-box;
+  margin-bottom: 48rpx;
+  height: 96rpx;
+  display: flex;
+  align-items: center;
+}
+
+.nickname-input {
+  width: 100%;
+  font-size: 32rpx;
+  color: #212121;
+  height: 96rpx;
+  line-height: 96rpx;
+}
+
+/* ===== Confirm Button ===== */
 .btn-primary {
   background-color: #4CAF50;
   color: #FFFFFF;
@@ -39,7 +96,6 @@
   font-weight: 600;
   border: none;
   width: 100%;
-  margin-bottom: 32rpx;
   box-sizing: border-box;
 }
 
@@ -47,18 +103,7 @@
   border: none;
 }
 
-.btn-secondary {
-  background-color: #FFFFFF;
-  color: #4CAF50;
-  border-radius: 24rpx;
-  padding: 28rpx 32rpx;
-  font-size: 32rpx;
-  font-weight: 600;
-  border: 2rpx solid #4CAF50;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.btn-secondary::after {
-  border: none;
+.btn-disabled {
+  background-color: #A5D6A7 !important;
+  color: #FFFFFF !important;
 }
