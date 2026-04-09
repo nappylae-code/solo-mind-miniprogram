@@ -1,7 +1,67 @@
 <view class="container">
-  <view class="placeholder">
-    <text class="emoji">📔</text>
-    <text class="title">日记功能</text>
-    <text class="description">此功能正在开发中...</text>
-  </view>
+  <scroll-view scroll-y class="scroll-content">
+
+    <!-- Header -->
+    <view class="header-section">
+      <text class="page-title">心情日记</text>
+    </view>
+
+    <!-- Daily Prompt Card -->
+    <view class="prompt-card">
+      <text class="prompt-label">今日引导</text>
+      <text class="prompt-text">{{todayPrompt}}</text>
+    </view>
+
+    <!-- Write Area -->
+    <view class="write-card">
+      <textarea
+        class="diary-input"
+        placeholder="写下你的想法..."
+        placeholder-style="color: #BDBDBD; font-size: 30rpx;"
+        value="{{todayContent}}"
+        bindinput="onContentInput"
+        maxlength="1000"
+        auto-height="{{false}}"
+      />
+    </view>
+
+    <!-- Save Button -->
+    <button
+      class="save-btn {{saving ? 'save-btn-disabled' : ''}}"
+      bindtap="onSave"
+      disabled="{{saving}}"
+    >
+      {{saving ? '保存中...' : '保存日记'}}
+    </button>
+
+    <!-- Past Entries -->
+    <view class="history-section">
+      <text class="history-title">过往记录</text>
+
+      <!-- Entry List -->
+      <block wx:if="{{recentEntries.length > 0}}">
+        <view
+          class="entry-row"
+          wx:for="{{recentEntries}}"
+          wx:key="date"
+        >
+          <text class="entry-date">{{item.displayDate}}</text>
+          <text class="entry-preview">{{item.preview}}</text>
+        </view>
+      </block>
+
+      <!-- Empty State -->
+      <view class="empty-history" wx:if="{{recentEntries.length === 0}}">
+        <text class="empty-text">还没有过往记录，写下今天的第一篇吧 🌱</text>
+      </view>
+
+      <!-- Unlock More Row -->
+      <view class="unlock-row" bindtap="onUnlockMore">
+        <text class="unlock-text">更多  解锁全部历史记录</text>
+        <text class="vip-badge">会员</text>
+      </view>
+    </view>
+
+  </scroll-view>
 </view>
+
