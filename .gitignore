@@ -33,3 +33,6 @@ yarn-error.log
 # Terminal Paste Image folder
 .cp-images/
 
+# WeChat DevTools private config (local only)
+project.private.config.json
+

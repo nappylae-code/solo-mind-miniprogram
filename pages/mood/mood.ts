@@ -2,8 +2,8 @@ import { getSecureItem, saveSecureItem, deleteSecureItem } from '../../utils/enc
 import { MOODS, getMoodByKey, MoodType } from '../../constants/mood';
 
 const USER_ID_KEY = 'userId';
-const LOGGED_IN_KEY = 'isLoggedIn';
 const MOOD_DATA_KEY = 'moodData';
+const NOTE_MAX_LENGTH = 500;
 
 interface MoodEntry {
   timestamp: number;
@@ -98,7 +98,6 @@ Page({
 
           this.setData({ moodEntries: entries });
         } catch (err) {
-          console.error('Error parsing mood data:', err);
           this.setData({ moodEntries: {} });
         }
       } else {
@@ -109,7 +108,6 @@ Page({
       this.syncTodayEntry();
       this.setData({ ready: true });
     } catch (error) {
-      console.error('loadData error:', error);
       this.setData({ ready: true });
     }
   },
@@ -198,15 +196,26 @@ Page({
   },
 
   onSelectMood(e: WechatMiniprogram.TouchEvent) {
-    const moodKey = (e.currentTarget as any).dataset.moodKey;
+    const moodKey = (e.currentTarget.dataset as { moodKey: string }).moodKey;
     this.setData({
       selectedMood: moodKey,
       selectedMoodObj: getMoodByKey(moodKey) || null
     });
   },
 
-  onNoteInput(e: any) {
-    this.setData({ note: e.detail.value });
+  onNoteInput(e: WechatMiniprogram.Input) {
+    const value = e.detail.value;
+    // Enforce max length and trim leading whitespace
+    if (value.length > NOTE_MAX_LENGTH) {
+      this.setData({ note: value.slice(0, NOTE_MAX_LENGTH) });
+      wx.showToast({
+        title: `最多输入${NOTE_MAX_LENGTH}个字`,
+        icon: 'none',
+        duration: 1500
+      });
+      return;
+    }
+    this.setData({ note: value });
   },
 
   async handleSave() {
@@ -242,7 +251,6 @@ Page({
         confirmText: '确定'
       });
     } catch (error) {
-      console.error('Save error:', error);
       wx.showModal({
         title: '错误',
         content: '保存失败，请重试',
