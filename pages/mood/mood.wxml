@@ -58,9 +58,9 @@
     </view>
 
     <!-- Community Hot Post Card -->
-    <view class="card community-card">
+    <view class="card community-card" bindtap="onGoToCommunity">
       <text class="card-title">社区热帖</text>
-      <text class="community-text">「周末一个人去了展览，比想象中享受很多...」342人共鸣</text>
+      <text class="community-text">去社区看看大家在聊什么 →</text>
     </view>
 
   </scroll-view>
