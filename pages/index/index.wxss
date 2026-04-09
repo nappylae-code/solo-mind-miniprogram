@@ -102,3 +102,8 @@
 .btn-primary::after {
   border: none;
 }
+
+.btn-disabled {
+  background-color: #A5D6A7 !important;
+  color: #FFFFFF !important;
+}
