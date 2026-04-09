@@ -2,7 +2,6 @@ import { getSecureItem, saveSecureItem, deleteSecureItem } from '../../utils/enc
 import { MOODS, getMoodByKey, MoodType } from '../../constants/mood';
 
 const USER_ID_KEY = 'userId';
-const LOGGED_IN_KEY = 'isLoggedIn';
 const MOOD_DATA_KEY = 'moodData';
 const NOTE_MAX_LENGTH = 500;
 
