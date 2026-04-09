@@ -1,38 +1,59 @@
-// Helper to generate a UUID v4
+declare const wx: any;
+
+// ============================================
+// Generate a cryptographically secure UUID v4
+// Using wx.getRandomValues instead of Math.random()
+// ============================================
 function generateUUID(): string {
-  const hex = '0123456789abcdef';
-  let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return hex[v];
+  const array = new Uint8Array(16);
+
+  wx.getRandomValues({
+    length: 16,
+    success: (res: any) => {
+      const randomValues = new Uint8Array(res.randomValues);
+      for (let i = 0; i < 16; i++) {
+        array[i] = randomValues[i];
+      }
+    }
   });
-  return uuid;
+
+  // Set version to 4 (UUID v4)
+  array[6] = (array[6] & 0x0f) | 0x40;
+  // Set variant bits
+  array[8] = (array[8] & 0x3f) | 0x80;
+
+  const hex = Array.from(array).map(b => b.toString(16).padStart(2, '0'));
+
+  return [
+    hex.slice(0, 4).join(''),
+    hex.slice(4, 6).join(''),
+    hex.slice(6, 8).join(''),
+    hex.slice(8, 10).join(''),
+    hex.slice(10, 16).join('')
+  ].join('-');
 }
 
 Page({
   data: {},
 
   onShow() {
-    // Check if user already signed up
     try {
       const userId = wx.getStorageSync('userId');
       if (userId) {
-        // Already have user, go to mood page
         wx.switchTab({
           url: '/pages/mood/mood'
         });
         return;
       }
     } catch (error) {
-      console.error('Error checking userId:', error);
+      // silently handle storage error
     }
-    // No user, stay on this consent page
   },
 
   onUseWeChat() {
     wx.getUserProfile({
       desc: '用于完善会员资料',
-      success: (res) => {
+      success: (res: any) => {
         const userInfo = res.userInfo;
         const userId = generateUUID();
 
@@ -46,7 +67,6 @@ Page({
             url: '/pages/mood/mood'
           });
         } catch (error) {
-          console.error('Storage error:', error);
           wx.showModal({
             title: '错误',
             content: '保存用户信息失败',
@@ -55,8 +75,7 @@ Page({
           });
         }
       },
-      fail: (err) => {
-        console.error('getUserProfile failed:', err);
+      fail: () => {
         wx.showModal({
           title: '取消授权',
           content: '您取消了授权，无法使用本小程序。',
@@ -71,8 +90,6 @@ Page({
     try {
       wx.exitMiniProgram();
     } catch (error) {
-      console.error('exitMiniProgram error:', error);
-      // Fallback: maybe close by navigating to empty page?
       wx.redirectTo({
         url: '/pages/index/index'
       });
