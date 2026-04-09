@@ -1,19 +1,26 @@
 declare const wx: any;
 
+// ============================================
+// Generate a UUID v4 using synchronous random
+// crypto.getRandomValues is supported in
+// WeChat MiniProgram base library 2.17.3+
+// ============================================
 function generateUUID(): string {
   const array = new Uint8Array(16);
 
-  wx.getRandomValues({
-    length: 16,
-    success: (res: any) => {
-      const randomValues = new Uint8Array(res.randomValues);
-      for (let i = 0; i < 16; i++) {
-        array[i] = randomValues[i];
-      }
+  // Use synchronous crypto.getRandomValues
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(array);
+  } else {
+    // Safe fallback using Math.random()
+    for (let i = 0; i < 16; i++) {
+      array[i] = Math.floor(Math.random() * 256);
     }
-  });
+  }
 
+  // Set version to 4 (UUID v4)
   array[6] = (array[6] & 0x0f) | 0x40;
+  // Set variant bits
   array[8] = (array[8] & 0x3f) | 0x80;
 
   const hex = Array.from(array).map(b => b.toString(16).padStart(2, '0'));
@@ -45,23 +52,19 @@ Page({
     }
   },
 
-  // Called when user picks an avatar
   onChooseAvatar(e: any) {
     const { avatarUrl } = e.detail;
     this.setData({ avatarUrl });
   },
 
-  // Called when user types in nickname input
   onNicknameInput(e: any) {
     this.setData({ nickname: e.detail.value });
   },
 
-  // Also capture nickname on blur (WeChat fills it on blur)
   onNicknameBlur(e: any) {
     this.setData({ nickname: e.detail.value });
   },
 
-  // Called when user taps "进入 SoloMind"
   onConfirm() {
     const { avatarUrl, nickname } = this.data;
 
