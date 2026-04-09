@@ -4,6 +4,7 @@ declare const wx: any;
 // Cloud Database Collection Name
 // ============================================
 const COLLECTION_NAME = 'moodEntries';
+const LOCAL_CACHE_KEY = 'moodEntriesCache';
 
 // ============================================
 // Interfaces
@@ -71,7 +72,7 @@ export async function saveMoodToCloud(entry: CloudMoodEntry): Promise<boolean> {
     } catch (e) {
       // ignore cache update error
     }
-    
+
     return true;
   } catch (error) {
     return false;
@@ -82,8 +83,6 @@ export async function saveMoodToCloud(entry: CloudMoodEntry): Promise<boolean> {
 // Get all mood entries for a user
 // Returns entries as a Record<date, entry> map
 // ============================================
-const LOCAL_CACHE_KEY = 'moodEntriesCache';
-
 export async function loadMoodFromCloud(
   userId: string
 ): Promise<Record<string, { timestamp: number; moodKey: string; note?: string }>> {
