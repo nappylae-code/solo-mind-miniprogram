@@ -24,6 +24,7 @@ yarn-error.log
 # Environment
 .env
 .env.local
+.claude/
 
 # Misc
 .project
@@ -31,3 +32,4 @@ yarn-error.log
 
 # Terminal Paste Image folder
 .cp-images/
+
