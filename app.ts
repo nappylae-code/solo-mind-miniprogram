@@ -5,8 +5,8 @@
 // ============================================
 
 const globalObj = typeof globalThis !== 'undefined' ? globalThis :
-                  typeof global !== 'undefined' ? global :
-                  typeof window !== 'undefined' ? window : {};
+  typeof global !== 'undefined' ? global :
+  typeof window !== 'undefined' ? window : {} as any;
 
 // Ensure global crypto object exists
 if (!globalObj.crypto) {
@@ -14,38 +14,36 @@ if (!globalObj.crypto) {
 }
 
 // Polyfill getRandomValues using wx.getRandomValues
+// Removed Math.random() fallback — wx.getRandomValues is always
+// available in WeChat Mini Program environment
 if (!globalObj.crypto.getRandomValues) {
   globalObj.crypto.getRandomValues = function(array: Uint8Array | Uint16Array | Uint32Array): void {
     if (typeof wx !== 'undefined' && wx.getRandomValues) {
       wx.getRandomValues(array);
     } else {
-      // Fallback to Math.random if wx is not available
-      for (let i = 0; i < array.length; i++) {
-        const max = array[i] instanceof Uint8Array ? 256 :
-                    array[i] instanceof Uint16Array ? 65536 : 4294967296;
-        array[i] = Math.floor(Math.random() * max);
-      }
+      // wx is not available — throw error instead of using insecure Math.random()
+      throw new Error('wx.getRandomValues is not available. Secure random number generation failed.');
     }
   };
 }
 
 // Polyfill randomBytes (used by some crypto-js algorithms)
+// Removed Math.random() fallback — wx.getRandomValues is always
+// available in WeChat Mini Program environment
 if (!globalObj.crypto.randomBytes) {
   globalObj.crypto.randomBytes = function(size: number): any {
     const array = new Uint8Array(size);
     if (typeof wx !== 'undefined' && wx.getRandomValues) {
       wx.getRandomValues(array);
     } else {
-      for (let i = 0; i < size; i++) {
-        array[i] = Math.floor(Math.random() * 256);
-      }
+      // wx is not available — throw error instead of using insecure Math.random()
+      throw new Error('wx.getRandomValues is not available. Secure random number generation failed.');
     }
     return {
       toString: (encoding?: string) => {
         if (encoding === 'hex') {
           return Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
         }
-        // Basic UTF-8 decode for non-hex
         let result = '';
         for (let i = 0; i < array.length; i++) {
           result += String.fromCharCode(array[i]);
@@ -56,6 +54,9 @@ if (!globalObj.crypto.randomBytes) {
   };
 }
 
+// ============================================
+// App entry point
+// ============================================
 App<IAppOption>({
   onLaunch() {
     console.log('SoloMind Mini Program launched');
@@ -65,11 +66,14 @@ App<IAppOption>({
     userId: null as string | null,
     isLoggedIn: false
   }
-})
+});
 
+// ============================================
+// IAppOption interface — fixed to match globalData
+// ============================================
 interface IAppOption {
   globalData: {
-    userEmail: string | null;
+    userId: string | null;    // Fixed: was incorrectly typed as userEmail
     isLoggedIn: boolean;
   };
 }
