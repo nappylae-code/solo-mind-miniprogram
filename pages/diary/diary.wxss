@@ -64,17 +64,15 @@
 
 /* ===== Save Button ===== */
 .save-btn {
-  background-color: #FFFFFF;
-  color: #212121;
-  border-radius: 16rpx;
-  border: 2rpx solid #E0E0E0;
-  font-size: 34rpx;
-  font-weight: 600;
   width: 100%;
-  height: 96rpx;
-  line-height: 96rpx;
+  background-color: #4CAF50;
+  color: #FFFFFF;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: 16rpx;
+  padding: 20rpx 0;
+  border: none;
   margin-bottom: 40rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06);
 }
 
 .save-btn::after {
@@ -82,7 +80,8 @@
 }
 
 .save-btn-disabled {
-  color: #BDBDBD !important;
+  background-color: #A5D6A7 !important;
+  color: #FFFFFF !important;
 }
 
 /* ===== History Section ===== */
