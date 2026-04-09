@@ -1,116 +1,161 @@
-# SoloMind WeChat Mini Program
 
-This is the WeChat Mini Program version of SoloMind, a mood tracking app that helps users record and track their daily emotional states.
+---
 
-## Project Structure
+## ✅ 已实现功能
 
-```
-solo-mind-miniprogram_claude/
-├── app.json              # Global configuration (pages list, window settings)
-├── app.wxss              # Global styles
-├── package.json          # NPM dependencies
-├── tsconfig.json         # TypeScript configuration
-├── project.config.json   # WeChat DevTools project config
-├── sitemap.json          # Sitemap for indexing
-├── assets/               # App icons and images
-├── components/
-│   └── MoodCard/         # Reusable mood card component
-├── pages/
-│   ├── index/            # WeChat identity consent/auth page
-│   └── mood/             # Main mood tracking page
-├── utils/
-│   └── encryption.ts     # Secure storage utilities
-└── constants/
-    └── mood.ts           # Mood definitions (5 mood categories)
-```
+### 🔐 认证与登录
+- 使用微信 `getUserProfile` API 进行身份验证
+- 首次使用时弹出授权对话框，获取用户昵称与头像
+- 自动生成 UUID 作为唯一用户标识
+- 已登录用户自动跳转至情绪记录页，无需重复授权
+- 支持退出小程序功能
 
-## Prerequisites
+### 😊 情绪记录（首页）
+- 支持 5 种情绪分类：
 
-1. **WeChat DevTools** (微信开发者工具) installed
-2. WeChat account (for logging into DevTools and using WeChat identity)
+| 情绪 | Emoji | 颜色 |
+|---|---|---|
+| 非常好 | 😄 | 绿色 `#4CAF50` |
+| 快乐 | 😊 | 浅绿 `#8BC34A` |
+| 平静 | 😌 | 蓝色 `#2196F3` |
+| 悲伤 | 😢 | 红色 `#F44336` |
+| 愤怒 | 😡 | 粉红 `#E91E63` |
 
-## Setup Steps
+- 每日情绪选择与可选备注记录
+- 点击「保存今天的心情」保存当天记录
+- 返回页面时自动同步当天已有记录
+- 每周日历视图，显示当周每天是否有情绪记录
+- 连续打卡天数（Streak）统计
+- 支持旧数据格式自动迁移（数组格式 → 对象格式）
 
-### 1. Open Project
-- Launch WeChat DevTools
-- Click "Import Project"
-- Select this directory
-- Choose Test AppID (or your own) and TypeScript template (already configured)
+### 📔 日记页（开发中）
+- 页面框架已建立，功能待开发
 
-### 2. Install Dependencies
-This project uses `crypto-js` for encryption utilities.
+### 👥 社区页（开发中）
+- 页面框架已建立，功能待开发
 
-In WeChat DevTools:
-- Menu: **工具** (Tools) → **构建npm** (Build npm)
-- Wait for the build to complete
+### 👤 我的页（开发中）
+- 页面框架已建立，功能待开发
 
-This will install `crypto-js` into the `miniprogram_npm` folder.
+---
 
-### 3. Compile and Run
-- Click **"编译"** (Compile) button in DevTools
-- The simulator should show the app
-- Start by authorizing with WeChat identity on the index page
+## 🗂️ 数据存储
 
-## Features
+所有数据存储于微信本地存储（`wx.storage`）：
 
-- ✅ WeChat identity authentication (getUserProfile)
-- ✅ Mood tracking with 5 categories (Great, Happy, Calm, Sad, Angry)
-- ✅ Daily notes with mood entries
-- ✅ Weekly calendar view with mood indicators
-- ✅ Streak counter for consecutive days
-- ✅ Secure local data storage
-- ✅ Chinese UI localization
-- ✅ Auto-save today's entry on return
+| 键名 | 说明 |
+|---|---|
+| `userId` | 用户唯一标识（UUID v4） |
+| `userNickname` | 微信昵称 |
+| `userAvatarUrl` | 微信头像 URL |
+| `isLoggedIn` | 登录状态标志 |
+| `moodData` | 情绪记录数据（JSON 格式，按日期键存储） |
 
-## Data Storage
+---
 
-All data is stored locally in WeChat's storage (`wx.storage`):
-- `userId` - Unique user identifier (UUID)
-- `userNickname` - WeChat nickname
-- `userAvatarUrl` - WeChat avatar URL
-- `isLoggedIn` - Login status flag
-- `moodData` - Mood entries (encrypted storage)
+## 📲 底部导航栏（TabBar）
 
-## Authentication Flow
+| Tab | 页面 | 标签 |
+|---|---|---|
+| 🏠 | `pages/mood/mood` | 首页 |
+| 📔 | `pages/diary/diary` | 日记 |
+| 👥 | `pages/community/community` | 社区 |
+| 👤 | `pages/profile/profile` | 我的 |
 
-1. User opens the app → redirected to `pages/index/index` (consent page)
-2. User clicks "使用微信登录" (Use WeChat to login)
-3. WeChat `getUserProfile` dialog appears
-4. Upon approval: user info is saved to storage and user is redirected to mood page
-5. On subsequent launches: user is automatically redirected to mood page if already logged in
+---
 
-## Development Notes
+## 🔑 认证流程
 
-- Built with **TypeScript** and **Sass** (WXSS)
-- Uses native WeChat Mini Program APIs (no external framework)
-- Responsive units: **rpx** (responsive pixels)
-- Minimum WeChat version: 7.0.0+
-- All UI text is localized in Chinese
+1. 用户打开小程序 → 跳转至 `pages/index/index`（授权页）
+2. 检查本地存储是否存在 `userId`
+   - ✅ 已有 → 自动跳转至情绪记录页
+   - ❌ 无 → 停留在授权页，等待用户点击「使用微信登录」
+3. 用户点击登录 → 弹出微信 `getUserProfile` 授权对话框
+4. 授权成功 → 生成 UUID，保存用户信息，跳转至情绪记录页
+5. 授权失败/取消 → 显示提示弹窗
 
-## Testing
+---
 
-1. Open the app → should see WeChat identity consent page
-2. Click "使用微信登录" to authorize
-3. You'll be taken to the mood tracking page
-4. Select a mood, optionally add a note
-5. Click "保存今天的心情" to save
-6. See the entry appear in the weekly calendar
-7. Streak counter increments with consecutive days
-8. Close and reopen to test persistence
+## 🛠️ 开发环境要求
 
-## Converting to Release
+- 微信开发者工具（微信 DevTools）已安装
+- 微信账号（用于登录开发者工具）
+- Node.js（用于安装 NPM 依赖）
 
-1. In DevTools, click **"预览"** (Preview) to generate a QR code
-2. Scan with WeChat on a real device to test
-3. For release: submit to WeChat for review via 微信开放平台
+---
 
-## Troubleshooting
+## 🚀 快速开始
 
-- **npm modules not found**: Ensure you ran "构建npm" and that `miniprogram_npm` folder exists
-- **Build errors**: Check that TypeScript compiles without errors in the DevTools console
-- **Storage errors**: Clear storage from DevTools: Tools → Clear storage
-- **getUserProfile fails**: Ensure the app is running in a WeChat environment (simulator or real device)
+### 1. 打开项目
+1. 启动微信开发者工具
+2. 点击「导入项目」
+3. 选择本项目目录
+4. 填入 AppID（使用测试 ID 或自己的 AppID）
 
-## License
+### 2. 安装依赖
+本项目使用 `crypto-js` 进行数据处理。
+
+在微信开发者工具中：
+- 菜单：**工具 → 构建 npm**
+- 等待构建完成（会生成 `miniprogram_npm` 文件夹）
+
+### 3. 编译运行
+- 点击「编译」按钮
+- 模拟器将显示授权登录页
+- 点击「使用微信登录」完成授权，进入情绪记录页
+
+---
+
+## 🧪 测试步骤
+
+1. 打开小程序 → 应显示微信授权登录页
+2. 点击「使用微信登录」进行授权
+3. 授权成功后跳转至情绪记录页（首页）
+4. 选择一种情绪，可选填写备注
+5. 点击「保存今天的心情」保存记录
+6. 查看当周日历视图，确认今天有情绪标记
+7. 连续打卡天数应正确累计
+8. 关闭并重新打开小程序，验证自动跳转至首页（无需重新授权）
+
+---
+
+## 📦 发布流程
+
+1. 在开发者工具中点击「预览」，生成二维码
+2. 用微信扫码在真机上测试
+3. 确认功能正常后，点击「上传」
+4. 前往微信开放平台提交审核：[mp.weixin.qq.com](https://mp.weixin.qq.com/){target="_blank"}
+
+---
+
+## 🔧 常见问题排查
+
+| 问题 | 解决方案 |
+|---|---|
+| npm 模块找不到 | 确认已执行「构建 npm」，且 `miniprogram_npm` 文件夹存在 |
+| 编译报错 | 检查 TypeScript 编译错误，查看开发者工具控制台 |
+| 存储错误 | 在开发者工具中清除存储：工具 → 清除存储 |
+| `getUserProfile` 失败 | 确保在微信环境（模拟器或真机）中运行，不支持普通浏览器 |
+| 情绪数据不显示 | 检查 `moodData` 键是否存在于本地存储中 |
+
+---
+
+## 🏗️ 技术栈
+
+| 技术 | 说明 |
+|---|---|
+| TypeScript | 主要开发语言 |
+| WXML | 页面结构（类 HTML） |
+| WXSS | 页面样式（类 CSS，使用 rpx 响应式单位） |
+| crypto-js | SHA256 哈希工具 |
+| wx.storage | 本地数据持久化 |
+| wx.getUserProfile | 微信用户身份验证 |
+
+- 最低支持微信版本：**7.0.0+**
+- 无外部 UI 框架，使用原生微信小程序组件
+
+---
+
+## 📄 License
 
 Private
