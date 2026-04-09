@@ -8,7 +8,10 @@
       "Bash(git push:*)",
       "Bash(grep -i -n \"Mood\\\\|Check\\\\|Sign\\\\|Login\\\\|Register\\\\|Email\\\\|Password\\\\|Creating\\\\|Don't\\\\|Already\\\\|account\\\\|Logout\\\\|track\" pages/*/*.wxml pages/*/*.wxml)",
       "Bash(grep -v \"import\\\\|const\\\\|function\\\\|//\")",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(git commit:*)",
+      "Bash(chmod +x /tmp/create_icon.sh)",
+      "Bash(/tmp/create_icon.sh)"
     ]
   }
 }
