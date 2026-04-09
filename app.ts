@@ -14,29 +14,23 @@ if (!globalObj.crypto) {
 }
 
 // Polyfill getRandomValues using wx.getRandomValues
-// Removed Math.random() fallback — wx.getRandomValues is always
-// available in WeChat Mini Program environment
 if (!globalObj.crypto.getRandomValues) {
   globalObj.crypto.getRandomValues = function(array: Uint8Array | Uint16Array | Uint32Array): void {
     if (typeof wx !== 'undefined' && wx.getRandomValues) {
       wx.getRandomValues(array);
     } else {
-      // wx is not available — throw error instead of using insecure Math.random()
       throw new Error('wx.getRandomValues is not available. Secure random number generation failed.');
     }
   };
 }
 
 // Polyfill randomBytes (used by some crypto-js algorithms)
-// Removed Math.random() fallback — wx.getRandomValues is always
-// available in WeChat Mini Program environment
 if (!globalObj.crypto.randomBytes) {
   globalObj.crypto.randomBytes = function(size: number): any {
     const array = new Uint8Array(size);
     if (typeof wx !== 'undefined' && wx.getRandomValues) {
       wx.getRandomValues(array);
     } else {
-      // wx is not available — throw error instead of using insecure Math.random()
       throw new Error('wx.getRandomValues is not available. Secure random number generation failed.');
     }
     return {
@@ -59,6 +53,15 @@ if (!globalObj.crypto.randomBytes) {
 // ============================================
 App<IAppOption>({
   onLaunch() {
+    // Initialize WeChat Cloud Base
+    if (!wx.cloud) {
+      console.error('请使用 2.2.3 或以上的基础库以使用云能力');
+    } else {
+      wx.cloud.init({
+        env: 'cloud1-3gh5mibgd5111425',
+        traceUser: true
+      });
+    }
     console.log('SoloMind Mini Program launched');
   },
 
@@ -69,11 +72,11 @@ App<IAppOption>({
 });
 
 // ============================================
-// IAppOption interface — fixed to match globalData
+// IAppOption interface
 // ============================================
 interface IAppOption {
   globalData: {
-    userId: string | null;    // Fixed: was incorrectly typed as userEmail
+    userId: string | null;
     isLoggedIn: boolean;
   };
 }
