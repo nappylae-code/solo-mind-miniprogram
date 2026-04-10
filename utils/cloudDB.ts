@@ -35,6 +35,7 @@ export interface CloudDiaryEntry {
   userId: string;
   date: string;
   content: string;   // 明文输入，保存时加密
+  moodKey?: string;
   timestamp: number;
 }
 
@@ -179,6 +180,7 @@ export async function saveDiaryToCloud(
         .update({
           data: {
             encryptedContent: encryptedContent,
+            moodKey: entry.moodKey || '',
             timestamp: entry.timestamp,
           },
         });
@@ -188,6 +190,7 @@ export async function saveDiaryToCloud(
           userId: entry.userId,
           date: entry.date,
           encryptedContent: encryptedContent,
+          moodKey: entry.moodKey || '',
           timestamp: entry.timestamp,
         },
       });
@@ -211,6 +214,7 @@ export async function loadDiaryFromCloud(
 ): Promise<Record<string, {
   timestamp: number;
   content?: string;
+  moodKey?: string;
 }>> {
   try {
     const db = wx.cloud.database();
@@ -235,6 +239,7 @@ export async function loadDiaryFromCloud(
         entries[item.date] = {
           timestamp: item.timestamp,
           content: content || undefined,
+          moodKey: item.moodKey || undefined,
         };
       }
     }
@@ -274,7 +279,41 @@ function _updateDiaryCache(entry: CloudDiaryEntry): void {
     entries[entry.date] = {
       timestamp: entry.timestamp,
       content: entry.content || undefined,
+      moodKey: entry.moodKey || undefined,
     };
     wx.setStorageSync(DIARY_CACHE_KEY, JSON.stringify(entries));
   } catch {}
 }
+
+// ============================================
+// DIARY — Delete
+// ============================================
+export async function deleteDiaryFromCloud(
+  userId: string,
+  date: string
+): Promise<boolean> {
+  try {
+    const db = wx.cloud.database();
+    const { data } = await db
+      .collection(DIARY_COLLECTION)
+      .where({ userId, date })
+      .get();
+
+    if (data && data.length > 0) {
+      await db.collection(DIARY_COLLECTION).doc(data[0]._id).remove();
+    }
+    // 更新本地缓存
+    try {
+      const cached = wx.getStorageSync(DIARY_CACHE_KEY);
+      if (cached) {
+        const entries = JSON.parse(cached);
+        delete entries[date];
+        wx.setStorageSync(DIARY_CACHE_KEY, JSON.stringify(entries));
+      }
+    } catch {}
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
