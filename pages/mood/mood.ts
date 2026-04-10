@@ -106,6 +106,7 @@ Page({
   },
 
   onLoad() {
+    const member = isMember();
     this.setData({
       MOODS,
       greeting: getGreeting(),
