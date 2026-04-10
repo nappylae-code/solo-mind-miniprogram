@@ -14,7 +14,6 @@ function setupWxCryptoRandom(): void {
   try {
     CryptoJS.lib.WordArray.random = function(nBytes: number): any {
       const words: number[] = [];
-      const array = new Uint8Array(nBytes);
 
       if (typeof wx !== 'undefined' && wx.getRandomValues) {
         wx.getRandomValues({ length: nBytes, success: (res: any) => {
@@ -29,17 +28,7 @@ function setupWxCryptoRandom(): void {
           }
         }});
       } else {
-        for (let i = 0; i < nBytes; i++) {
-          array[i] = Math.floor(Math.random() * 256);
-        }
-        for (let i = 0; i < nBytes; i += 4) {
-          words.push(
-            ((array[i] || 0) << 24) |
-            ((array[i + 1] || 0) << 16) |
-            ((array[i + 2] || 0) << 8) |
-            (array[i + 3] || 0)
-          );
-        }
+        throw new Error('wx.getRandomValues is not available. Secure random number generation failed.');
       }
 
       return CryptoJS.lib.WordArray.create(words, nBytes);
