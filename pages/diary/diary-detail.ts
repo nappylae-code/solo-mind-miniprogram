@@ -18,7 +18,6 @@ Page({
     date: '',
     displayDate: '',
     content: '',
-    moodEmoji: '',
     moodLabel: '',
     moodColor: '',
     timestamp: 0,

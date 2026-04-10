@@ -1,4 +1,4 @@
-import { loadDiaryFromCloud, deleteDiaryFromCloud } from '../../utils/cloudDB';
+import { loadDiaryFromCloud } from '../../utils/cloudDB';
 import { getUserId } from '../../utils/encryption';
 import { getMoodByKey } from '../../constants/mood';
 
