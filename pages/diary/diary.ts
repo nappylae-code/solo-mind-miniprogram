@@ -1,57 +1,29 @@
-// pages/diary/diary.ts
-import {
-  saveDiaryToCloud,
-  loadDiaryFromCloud,
-  CloudDiaryEntry
-} from '../../utils/cloudDB';
+import { loadDiaryFromCloud } from '../../utils/cloudDB';
 import { getUserId } from '../../utils/encryption';
-import { isMember, MEMBERSHIP } from '../../constants/membership';
+import { getMoodByKey } from '../../constants/mood';
 
 declare const wx: any;
 
-const PREVIEW_LENGTH = 80;
+const PREVIEW_LENGTH = 40;
 
 // ============================================
-// Daily Prompts - rotates by day of year
+// 工具函数
 // ============================================
-const DAILY_PROMPTS: string[] = [
-  '今天有没有一件只有独处时才能体验到的事？',
-  '今天最让你感到平静的时刻是什么？',
-  '如果今天是电影，它的标题会是什么？',
-  '今天你给自己做了什么小小的好事？',
-  '今天有什么事情让你停下来思考了一下？',
-  '今天你最享受的独处时光是什么？',
-  '有什么事情今天让你感到轻松了？',
-  '今天你注意到了什么平时忽略的细节？',
-  '今天最值得记录下来的一件小事是什么？',
-  '今天你允许自己做了什么？',
-  '今天有没有什么让你微笑的瞬间？',
-  '今天你最想对自己说的一句话是什么？',
-  '今天有什么新发现，哪怕是很小的事？',
-  '今天结束了，你感觉怎么样？',
-];
-
-function getDailyPrompt(): string {
-  const now = new Date();
-  const dayOfYear = Math.floor(
-    (now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000
-  );
-  return DAILY_PROMPTS[dayOfYear % DAILY_PROMPTS.length];
-}
-
 function getTodayKey(): string {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
-function formatDisplayDate(dateKey: string): string {
+function formatFullDate(dateKey: string): string {
   const parts = dateKey.split('-');
-  const month = parseInt(parts[1]);
-  const day = parseInt(parts[2]);
-  return `${month}月${day}日`;
+  const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  return `${parseInt(parts[1])}月${parseInt(parts[2])}日 ${days[d.getDay()]}`;
+}
+
+function formatMonthGroup(dateKey: string): string {
+  const parts = dateKey.split('-');
+  return `${parts[0]}年${parseInt(parts[1])}月`;
 }
 
 function getPreview(content: string): string {
@@ -61,177 +33,164 @@ function getPreview(content: string): string {
     : content;
 }
 
-// ============================================
-// Interfaces
-// ============================================
-interface DiaryEntry {
+interface DiaryItem {
   date: string;
   displayDate: string;
-  content: string;
+  moodImage: string;
+  moodKey: string;
   preview: string;
+  content: string;
   timestamp: number;
 }
 
+interface MonthGroup {
+  monthLabel: string;
+  entries: DiaryItem[];
+}
+
 // ============================================
-// Page
+// 情绪筛选 Tab
 // ============================================
+const MOOD_FILTERS = [
+  { key: 'ALL',   label: '全部', image: '' },
+  { key: 'GREAT', label: '极好', image: '/assets/moods/great.png' },
+  { key: 'HAPPY', label: '开心', image: '/assets/moods/happy.png' },
+  { key: 'CALM',  label: '平静', image: '/assets/moods/calm.png'  },
+  { key: 'SAD',   label: '难过', image: '/assets/moods/sad.png'   },
+  { key: 'ANGRY', label: '生气', image: '/assets/moods/angry.png' },
+];
+
 Page({
   data: {
     userId: null as string | null,
-    isMember: false,
-    contentLimit: MEMBERSHIP.DIARY_CONTENT_LIMIT_FREE,
-    charCount: 0,
-    todayPrompt: '',
-    todayContent: '',
-    todayKey: '',
-    hasTodayEntry: false,
-    recentEntries: [] as DiaryEntry[],
     loading: false,
-    saving: false,
+    allEntries: [] as DiaryItem[],       // 全量数据
+    monthGroups: [] as MonthGroup[],     // 渲染用分组数据
+    searchKeyword: '',
+    activeMoodFilter: 'ALL',
+    moodFilters: MOOD_FILTERS,
   },
 
-  onLoad() {
-    const member = isMember();
-    this.setData({
-      todayPrompt: getDailyPrompt(),
-      todayKey: getTodayKey(),
-      isMember: member,
-      contentLimit: member
-        ? MEMBERSHIP.DIARY_CONTENT_LIMIT_MEMBER
-        : MEMBERSHIP.DIARY_CONTENT_LIMIT_FREE,
-    });
-  },
+  onLoad() {},
 
   onShow() {
     this.loadData();
   },
 
   async loadData() {
-    try {
-      const userId = getUserId();
-      if (!userId) {
-        wx.redirectTo({ url: '/pages/index/index' });
-        return;
-      }
-      this.setData({ userId, loading: true });
+    const userId = getUserId();
+    if (!userId) {
+      wx.redirectTo({ url: '/pages/index/index' });
+      return;
+    }
+    this.setData({ userId, loading: true });
+    wx.showLoading({ title: '加载中...' });
 
-      // 使用独立的 diaryEntries collection
+    try {
       const entries = await loadDiaryFromCloud(userId);
-      this.processEntries(entries);
-      this.setData({ loading: false });
-
-    } catch (error) {
-      this.setData({ loading: false });
-    }
-  },
-
-  processEntries(
-    entries: Record<string, {
-      timestamp: number;
-      content?: string;
-    }>
-  ) {
-    const todayKey = this.data.todayKey;
-    const todayEntry = entries[todayKey];
-
-    this.setData({
-      hasTodayEntry: !!todayEntry,
-      todayContent: todayEntry?.content || '',
-      charCount: (todayEntry?.content || '').length,
-    });
-
-    // 过去的日记列表（排除今天，最多显示10条）
-    const pastEntries: DiaryEntry[] = Object.entries(entries)
-      .filter(([date]) => date !== todayKey)
-      .sort(([, a], [, b]) => b.timestamp - a.timestamp)
-      .slice(0, 10)
-      .map(([date, entry]) => ({
-        date,
-        displayDate: formatDisplayDate(date),
-        content: entry.content || '',
-        preview: getPreview(entry.content || ''),
-        timestamp: entry.timestamp,
-      }));
-
-    this.setData({ recentEntries: pastEntries });
-  },
-
-  onContentInput(e: WechatMiniprogram.Input) {
-    const value = e.detail.value;
-    const { contentLimit } = this.data;
-
-    if (value.length > contentLimit) {
-      this.setData({
-        todayContent: value.slice(0, contentLimit),
-        charCount: contentLimit,
-      });
-      wx.showToast({
-        title: `最多输入${contentLimit}个字`,
-        icon: 'none',
-        duration: 1500,
-      });
-      return;
-    }
-    this.setData({
-      todayContent: value,
-      charCount: value.length,
-    });
-  },
-
-  async onSave() {
-    const { userId, todayKey, todayContent, saving } = this.data;
-
-    if (saving) return;
-
-    if (!todayContent || todayContent.trim() === '') {
-      wx.showToast({ title: '请写点什么再保存', icon: 'none' });
-      return;
-    }
-
-    this.setData({ saving: true });
-    wx.showLoading({ title: '保存中...' });
-
-    try {
-      // 使用独立的 saveDiaryToCloud（不含 moodKey）
-      const success = await saveDiaryToCloud({
-        userId: userId!,
-        date: todayKey,
-        content: todayContent.trim(),
-        timestamp: Date.now(),
-      } as CloudDiaryEntry);
-
-      wx.hideLoading();
-
-      if (success) {
-        this.setData({ saving: false, hasTodayEntry: true });
-        wx.showToast({
-          title: '日记已保存 ✓',
-          icon: 'none',
-          duration: 2000,
+      // 转换为列表，按时间倒序
+      const list: DiaryItem[] = Object.entries(entries)
+        .sort(([, a], [, b]) => b.timestamp - a.timestamp)
+        .map(([date, entry]) => {
+          const mood = getMoodByKey(entry.moodKey || '');
+          return {
+            date,
+            displayDate: formatFullDate(date),
+            moodImage: mood ? mood.image : '/assets/moods/calm.png',
+            moodKey: entry.moodKey || '',
+            preview: getPreview(entry.content || ''),
+            content: entry.content || '',
+            timestamp: entry.timestamp,
+          };
         });
-      } else {
-        this.setData({ saving: false });
-        wx.showModal({
-          title: '保存失败',
-          content: '请检查网络后重试',
-          showCancel: false,
-          confirmText: '确定',
-        });
-      }
 
-    } catch (error) {
+      this.setData({ allEntries: list });
+      this.applyFilter();
+    } catch (e) {
+      wx.showToast({ title: '加载失败', icon: 'none' });
+    } finally {
       wx.hideLoading();
-      this.setData({ saving: false });
-      wx.showModal({
-        title: '保存失败',
-        content: '请检查网络后重试',
-        showCancel: false,
-        confirmText: '确定',
-      });
+      this.setData({ loading: false });
     }
   },
 
-  onUpgradeMember() {
-    wx.showToast({ title: '会员功能即将开放', icon: 'none' });
+  // ============================================
+  // 搜索
+  // ============================================
+  onSearchInput(e: WechatMiniprogram.Input) {
+    this.setData({ searchKeyword: e.detail.value });
+    this.applyFilter();
+  },
+
+  onSearchClear() {
+    this.setData({ searchKeyword: '' });
+    this.applyFilter();
+  },
+
+  // ============================================
+  // 情绪筛选
+  // ============================================
+  onMoodFilterTap(e: WechatMiniprogram.TouchEvent) {
+    const key = (e.currentTarget.dataset as { key: string }).key;
+    this.setData({ activeMoodFilter: key });
+    this.applyFilter();
+  },
+
+  // ============================================
+  // 筛选 + 分组逻辑
+  // ============================================
+  applyFilter() {
+    const { allEntries, activeMoodFilter, searchKeyword } = this.data;
+
+    let filtered = allEntries;
+
+    // 情绪筛选
+    if (activeMoodFilter !== 'ALL') {
+      filtered = filtered.filter(e => e.moodKey === activeMoodFilter);
+    }
+
+    // 关键词搜索
+    if (searchKeyword.trim()) {
+      const kw = searchKeyword.trim().toLowerCase();
+      filtered = filtered.filter(e =>
+        e.content.toLowerCase().includes(kw) ||
+        e.displayDate.includes(kw)
+      );
+    }
+
+    // 按月分组
+    const groupMap: Record<string, DiaryItem[]> = {};
+    for (const entry of filtered) {
+      const monthLabel = formatMonthGroup(entry.date);
+      if (!groupMap[monthLabel]) groupMap[monthLabel] = [];
+      groupMap[monthLabel].push(entry);
+    }
+
+    const monthGroups: MonthGroup[] = Object.entries(groupMap).map(([monthLabel, entries]) => ({
+      monthLabel,
+      entries,
+    }));
+
+    this.setData({ monthGroups });
+  },
+
+  // ============================================
+  // 跳转详情
+  // ============================================
+  onEntryTap(e: WechatMiniprogram.TouchEvent) {
+    const date = (e.currentTarget.dataset as { date: string }).date;
+    wx.navigateTo({
+      url: `/pages/diary/diary-detail?date=${date}`,
+    });
+  },
+
+  // ============================================
+  // FAB：新建日记 → 跳转编辑页
+  // ============================================
+  onNewDiary() {
+    const todayKey = getTodayKey();
+    wx.navigateTo({
+      url: `/pages/diary/diary-edit?date=${todayKey}&isNew=true`,
+    });
   },
 });
