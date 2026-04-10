@@ -1,3 +1,25 @@
-<view class="container">
-  <text>日记详情页（开发中）</text>
+<view class="container" wx:if="{{!loading}}">
+
+<!-- 情绪标签 -->
+<view class="mood-section">
+  <view class="mood-badge" style="background-color: {{moodColor}}20; border-color: {{moodColor}};">
+    <text class="mood-emoji">{{moodEmoji}}</text>
+    <text class="mood-label" style="color: {{moodColor}};">{{moodLabel}}</text>
+  </view>
+  <text class="detail-date">{{displayDate}}</text>
+</view>
+
+<view class="divider"></view>
+
+<!-- 日记正文 -->
+<scroll-view scroll-y class="content-scroll">
+  <text class="content-text">{{content}}</text>
+  <view class="bottom-spacer"></view>
+</scroll-view>
+
+<!-- 底部操作栏 -->
+<view class="action-bar">
+  <button class="edit-btn" bindtap="onEdit">✏️ 编辑</button>
+</view>
+
 </view>

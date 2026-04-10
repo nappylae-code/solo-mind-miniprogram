@@ -1,3 +1,52 @@
 <view class="container">
-  <text>日记编辑页（开发中）</text>
+
+<!-- 今天心情关联 -->
+<view class="mood-section">
+  <text class="mood-section-title">今天心情：</text>
+  <scroll-view scroll-x class="mood-scroll">
+    <view class="mood-row">
+      <block wx:for="{{MOODS}}" wx:key="key">
+        <view
+          class="mood-item {{selectedMoodKey === item.key ? 'mood-item-active' : ''}}"
+          style="{{selectedMoodKey === item.key ? 'border-color:' + item.color + ';background-color:' + item.color + '20;' : ''}}"
+          bindtap="onMoodSelect"
+          data-key="{{item.key}}"
+        >
+          <text class="mood-emoji">{{item.emoji}}</text>
+          <text class="mood-label" style="{{selectedMoodKey === item.key ? 'color:' + item.color : ''}}">{{item.label}}</text>
+        </view>
+      </block>
+    </view>
+  </scroll-view>
+</view>
+
+<!-- 输入区 -->
+<view class="input-section">
+  <textarea
+    class="diary-textarea"
+    placeholder="写下今天的故事..."
+    placeholder-style="color: #BDBDBD; font-size: 30rpx;"
+    value="{{content}}"
+    bindinput="onContentInput"
+    maxlength="{{contentLimit}}"
+    auto-height
+    focus
+  />
+</view>
+
+<!-- 字数 + 工具栏 -->
+<view class="toolbar">
+  <text class="char-count">{{charCount}}/{{contentLimit}}</text>
+  <view class="toolbar-right">
+    <!-- 保存按钮 -->
+    <button
+      class="save-btn {{saving ? 'save-btn-disabled' : ''}}"
+      bindtap="onSave"
+      disabled="{{saving}}"
+    >
+      {{saving ? '保存中...' : '保存'}}
+    </button>
+  </view>
+</view>
+
 </view>
