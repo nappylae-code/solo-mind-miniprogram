@@ -1,10 +1,15 @@
-import { saveMoodToCloud, loadMoodFromCloud, CloudMoodEntry } from '../../utils/cloudDB';
+// pages/diary/diary.ts
+import {
+  saveDiaryToCloud,
+  loadDiaryFromCloud,
+  CloudDiaryEntry
+} from '../../utils/cloudDB';
 import { getUserId } from '../../utils/encryption';
+import { isMember, MEMBERSHIP } from '../../constants/membership';
 
 declare const wx: any;
 
-const MAX_RECENT = 3;
-const PREVIEW_LENGTH = 150;
+const PREVIEW_LENGTH = 80;
 
 // ============================================
 // Daily Prompts - rotates by day of year
@@ -56,32 +61,44 @@ function getPreview(content: string): string {
     : content;
 }
 
+// ============================================
+// Interfaces
+// ============================================
 interface DiaryEntry {
   date: string;
   displayDate: string;
   content: string;
   preview: string;
-  moodKey: string;
   timestamp: number;
 }
 
+// ============================================
+// Page
+// ============================================
 Page({
   data: {
     userId: null as string | null,
+    isMember: false,
+    contentLimit: MEMBERSHIP.DIARY_CONTENT_LIMIT_FREE,
+    charCount: 0,
     todayPrompt: '',
     todayContent: '',
     todayKey: '',
-    todayMoodKey: '',          // existing mood from mood page
-    hasTodayEntry: false,      // whether moodEntry exists for today
+    hasTodayEntry: false,
     recentEntries: [] as DiaryEntry[],
     loading: false,
     saving: false,
   },
 
   onLoad() {
+    const member = isMember();
     this.setData({
       todayPrompt: getDailyPrompt(),
       todayKey: getTodayKey(),
+      isMember: member,
+      contentLimit: member
+        ? MEMBERSHIP.DIARY_CONTENT_LIMIT_MEMBER
+        : MEMBERSHIP.DIARY_CONTENT_LIMIT_FREE,
     });
   },
 
@@ -98,8 +115,8 @@ Page({
       }
       this.setData({ userId, loading: true });
 
-      // Load all moodEntries from cloud (reuse existing util)
-      const entries = await loadMoodFromCloud(userId);
+      // 使用独立的 diaryEntries collection
+      const entries = await loadDiaryFromCloud(userId);
       this.processEntries(entries);
       this.setData({ loading: false });
 
@@ -108,30 +125,31 @@ Page({
     }
   },
 
-  processEntries(entries: Record<string, { timestamp: number; moodKey: string; note?: string }>) {
+  processEntries(
+    entries: Record<string, {
+      timestamp: number;
+      content?: string;
+    }>
+  ) {
     const todayKey = this.data.todayKey;
     const todayEntry = entries[todayKey];
 
-    // ── Today's entry ──────────────────────────────
-    // If user already saved mood+note on mood page, pre-fill diary textarea
     this.setData({
       hasTodayEntry: !!todayEntry,
-      todayContent: todayEntry?.note || '',
-      todayMoodKey: todayEntry?.moodKey || '',
+      todayContent: todayEntry?.content || '',
+      charCount: (todayEntry?.content || '').length,
     });
 
-    // ── Past entries ───────────────────────────────
-    // Sort by date descending, exclude today
+    // 过去的日记列表（排除今天，最多显示10条）
     const pastEntries: DiaryEntry[] = Object.entries(entries)
       .filter(([date]) => date !== todayKey)
       .sort(([, a], [, b]) => b.timestamp - a.timestamp)
-      .slice(0, MAX_RECENT)
+      .slice(0, 10)
       .map(([date, entry]) => ({
         date,
         displayDate: formatDisplayDate(date),
-        content: entry.note || '',
-        preview: getPreview(entry.note || ''),
-        moodKey: entry.moodKey,
+        content: entry.content || '',
+        preview: getPreview(entry.content || ''),
         timestamp: entry.timestamp,
       }));
 
@@ -139,11 +157,29 @@ Page({
   },
 
   onContentInput(e: WechatMiniprogram.Input) {
-    this.setData({ todayContent: e.detail.value });
+    const value = e.detail.value;
+    const { contentLimit } = this.data;
+
+    if (value.length > contentLimit) {
+      this.setData({
+        todayContent: value.slice(0, contentLimit),
+        charCount: contentLimit,
+      });
+      wx.showToast({
+        title: `最多输入${contentLimit}个字`,
+        icon: 'none',
+        duration: 1500,
+      });
+      return;
+    }
+    this.setData({
+      todayContent: value,
+      charCount: value.length,
+    });
   },
 
   async onSave() {
-    const { userId, todayKey, todayContent, todayMoodKey, saving } = this.data;
+    const { userId, todayKey, todayContent, saving } = this.data;
 
     if (saving) return;
 
@@ -156,28 +192,30 @@ Page({
     wx.showLoading({ title: '保存中...' });
 
     try {
-      // Reuse saveMoodToCloud — saves note into moodEntries collection
-      // If moodKey doesn't exist yet (user skipped mood page), use empty string
-      const success = await saveMoodToCloud({
+      // 使用独立的 saveDiaryToCloud（不含 moodKey）
+      const success = await saveDiaryToCloud({
         userId: userId!,
         date: todayKey,
-        moodKey: todayMoodKey || '',   // keep existing moodKey if any
-        note: todayContent.trim(),
+        content: todayContent.trim(),
         timestamp: Date.now(),
-      } as CloudMoodEntry);
+      } as CloudDiaryEntry);
 
       wx.hideLoading();
 
       if (success) {
         this.setData({ saving: false, hasTodayEntry: true });
-        wx.showToast({ title: '日记已保存 ✓', icon: 'none', duration: 2000 });
+        wx.showToast({
+          title: '日记已保存 ✓',
+          icon: 'none',
+          duration: 2000,
+        });
       } else {
         this.setData({ saving: false });
         wx.showModal({
           title: '保存失败',
           content: '请检查网络后重试',
           showCancel: false,
-          confirmText: '确定'
+          confirmText: '确定',
         });
       }
 
@@ -188,14 +226,12 @@ Page({
         title: '保存失败',
         content: '请检查网络后重试',
         showCancel: false,
-        confirmText: '确定'
+        confirmText: '确定',
       });
     }
   },
 
-  onUnlockMore() {
+  onUpgradeMember() {
     wx.showToast({ title: '会员功能即将开放', icon: 'none' });
   },
-
 });
-
