@@ -7,8 +7,8 @@ declare const wx: any; // ← 必须在顶部
 
 export const MEMBERSHIP = {
   // 情绪备注字数限制
-  MOOD_NOTE_LIMIT_FREE: 50,
-  MOOD_NOTE_LIMIT_MEMBER: 100,
+  MOOD_NOTE_LIMIT_FREE: 20,
+  MOOD_NOTE_LIMIT_MEMBER: 50,
 
   // 日记字数限制
   DIARY_CONTENT_LIMIT_FREE: 500,
