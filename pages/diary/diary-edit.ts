@@ -58,6 +58,8 @@ Page({
   },
 
   onMoodSelect(e: WechatMiniprogram.TouchEvent) {
+    // MoodCard 通过 triggerEvent('onpress') 触发
+    // moodKey 从 currentTarget.dataset 取
     const key = (e.currentTarget.dataset as { key: string }).key;
     const mood = getMoodByKey(key);
     this.setData({
