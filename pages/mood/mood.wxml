@@ -1,17 +1,17 @@
 <view class="container">
   <scroll-view scroll-y class="scroll-content">
 
-    <!-- Header: Greeting + Date -->
+    <!-- ① Header：问候语 + 日期 -->
     <view class="header-section">
-      <text class="greeting">{{greeting}}，{{userNickname || '朋友'}}</text>
+      <text class="greeting">{{greeting}}，{{userNickname || '朋友'}} 👋</text>
       <text class="date-string">{{dateString}}</text>
     </view>
 
-    <!-- Mood Check-in Card -->
+    <!-- ② 情绪打卡卡片 -->
     <view class="card mood-card">
-      <text class="card-title">今日心情打卡</text>
+      <text class="card-title">今天心情怎么样？</text>
 
-      <!-- Mood Emojis -->
+      <!-- 5种情绪选择 -->
       <view class="mood-row">
         <block wx:for="{{MOODS}}" wx:key="key">
           <MoodCard
@@ -23,44 +23,53 @@
         </block>
       </view>
 
-      <!-- Week Calendar -->
+      <!-- 备注输入框 -->
+      <textarea
+        class="note-input"
+        placeholder="写点什么...（选填）"
+        placeholder-style="color: #BDBDBD;"
+        value="{{note}}"
+        bindinput="onNoteInput"
+        maxlength="{{noteLimit}}"
+        show-count="{{false}}"
+        auto-height
+      />
+
+      <!-- 字数提示 -->
+      <text class="note-count">{{note.length}}/{{noteLimit}}</text>
+
+      <!-- 保存按钮 -->
+      <button class="save-button" bindtap="handleSave">💾 记录今天心情</button>
+    </view>
+
+    <!-- ③ 周历卡片（独立） -->
+    <view class="card week-card">
+      <text class="card-title">📅 本周心情</text>
+
+      <!-- 7天格子 -->
       <view class="week-days">
         <block wx:for="{{weekDays}}" wx:key="index">
           <view class="week-day">
-            <text class="week-day-label">{{item.label}}</text>
-            <view class="week-day-square {{item.hasEntry ? 'week-day-done' : (item.isToday ? 'week-day-today' : '')}}"></view>
+            <text class="week-day-label {{item.isToday ? 'week-day-label-today' : ''}}">
+              {{item.label}}
+            </text>
+            <!-- 已打卡：显示 emoji；今天未打卡：显示高亮空格；其他未打卡：灰色空格 -->
+            <view class="week-day-cell {{item.hasEntry ? 'cell-done' : (item.isToday ? 'cell-today' : 'cell-empty')}}">
+              <text wx:if="{{item.hasEntry}}" class="week-day-emoji">{{item.moodEmoji}}</text>
+              <text wx:elif="{{item.isToday}}" class="week-day-dot">·</text>
+            </view>
           </view>
         </block>
       </view>
 
       <!-- Streak -->
-      <text class="streak">连续打卡 {{streak}} 天 🔥</text>
-
-      <!-- Note Input (compact) -->
-      <textarea
-        class="note-input"
-        placeholder="写几句今天的感受..."
-        placeholder-style="color: #BDBDBD;"
-        value="{{note}}"
-        bindinput="onNoteInput"
-        maxlength="500"
-        show-count="{{false}}"
-      />
-
-      <!-- Save Button -->
-      <button class="save-button" bindtap="handleSave">完成打卡</button>
+      <text class="streak">🔥 已连续打卡 {{streak}} 天</text>
     </view>
 
-    <!-- Daily Quote Card -->
+    <!-- ④ 今日语录卡片 -->
     <view class="card quote-card">
-      <text class="card-title">今日推荐</text>
-      <text class="quote-text">{{dailyQuote}}</text>
-    </view>
-
-    <!-- Community Hot Post Card -->
-    <view class="card community-card" bindtap="onGoToCommunity">
-      <text class="card-title">社区热帖</text>
-      <text class="community-text">去社区看看大家在聊什么 →</text>
+      <text class="card-title">✨ 今日语录</text>
+      <text class="quote-text">"{{dailyQuote}}"</text>
     </view>
 
   </scroll-view>
