@@ -1,3 +1,85 @@
 .container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #FFFFFF;
+}
+
+/* ===== 情绪区域 ===== */
+.mood-section {
+  padding: 32rpx 32rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.mood-badge {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  padding: 10rpx 24rpx;
+  border-radius: 32rpx;
+  border: 2rpx solid;
+  align-self: flex-start;
+}
+
+.mood-image {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.mood-label {
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.detail-date {
+  font-size: 24rpx;
+  color: #9E9E9E;
+}
+
+/* ===== 分割线 ===== */
+.divider {
+  height: 1rpx;
+  background-color: #F0F0F0;
+  margin: 0 32rpx;
+}
+
+/* ===== 正文 ===== */
+.content-scroll {
+  flex: 1;
   padding: 32rpx;
+}
+
+.content-text {
+  font-size: 30rpx;
+  color: #212121;
+  line-height: 1.9;
+}
+
+.bottom-spacer {
+  height: 40rpx;
+}
+
+/* ===== 底部操作栏 ===== */
+.action-bar {
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid #F0F0F0;
+}
+
+.edit-btn {
+  width: 100%;
+  background-color: #4CAF50;
+  color: #FFFFFF;
+  font-size: 30rpx;
+  font-weight: 600;
+  border-radius: 16rpx;
+  padding: 20rpx 0;
+  border: none;
+}
+
+.edit-btn::after {
+  border: none;
 }

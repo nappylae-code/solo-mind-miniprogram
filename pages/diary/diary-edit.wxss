@@ -1,3 +1,84 @@
 .container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #FFFFFF;
+}
+
+/* ===== 情绪关联 ===== */
+.mood-section {
+  padding: 24rpx 24rpx 16rpx;
+  border-bottom: 1rpx solid #F0F0F0;
+}
+
+.mood-section-title {
+  font-size: 26rpx;
+  color: #757575;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+/* MoodCard 横排，与 mood 页面一致 */
+.mood-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+/* ===== 输入区 ===== */
+.input-section {
+  flex: 1;
   padding: 32rpx;
+  overflow: hidden;
+}
+
+.diary-textarea {
+  width: 100%;
+  height: 100%;
+  font-size: 30rpx;
+  color: #212121;
+  line-height: 1.9;
+}
+
+/* ===== 工具栏 ===== */
+.toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 16rpx 24rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid #F0F0F0;
+  background-color: #FFFFFF;
+}
+
+.char-count {
+  flex: 1;
+  font-size: 24rpx;
+  color: #BDBDBD;
+}
+
+.toolbar-right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.save-btn {
+  background-color: #4CAF50;
+  color: #FFFFFF;
+  font-size: 28rpx;
+  font-weight: 600;
+  border-radius: 12rpx;
+  padding: 14rpx 40rpx;
+  border: none;
+  margin: 0;
+  line-height: 1;
+}
+
+.save-btn::after {
+  border: none;
+}
+
+.save-btn-disabled {
+  background-color: #A5D6A7 !important;
 }

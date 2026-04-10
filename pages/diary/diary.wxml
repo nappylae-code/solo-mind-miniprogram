@@ -1,67 +1,83 @@
 <view class="container">
-  <scroll-view scroll-y class="scroll-content">
 
-    <!-- Header -->
-    <view class="header-section">
-      <text class="page-title">心情日记</text>
-    </view>
-
-    <!-- Daily Prompt Card -->
-    <view class="prompt-card">
-      <text class="prompt-label">今日引导</text>
-      <text class="prompt-text">{{todayPrompt}}</text>
-    </view>
-
-    <!-- Write Area -->
-    <view class="write-card">
-      <textarea
-        class="diary-input"
-        placeholder="写下你的想法..."
-        placeholder-style="color: #BDBDBD; font-size: 30rpx;"
-        value="{{todayContent}}"
-        bindinput="onContentInput"
-        maxlength="1000"
-        auto-height="{{false}}"
-      />
-    </view>
-
-    <!-- Save Button -->
-    <button
-      class="save-btn {{saving ? 'save-btn-disabled' : ''}}"
-      bindtap="onSave"
-      disabled="{{saving}}"
-    >
-      {{saving ? '保存中...' : '保存日记'}}
-    </button>
-
-    <!-- Past Entries -->
-    <view class="history-section">
-      <text class="history-title">过往记录</text>
-
-      <!-- Entry List -->
-      <block wx:if="{{recentEntries.length > 0}}">
-        <view
-          class="entry-row"
-          wx:for="{{recentEntries}}"
-          wx:key="date"
-        >
-          <text class="entry-date">{{item.displayDate}}</text>
-          <text class="entry-preview">{{item.preview}}</text>
-        </view>
-      </block>
-
-      <!-- Empty State -->
-      <view class="empty-history" wx:if="{{recentEntries.length === 0}}">
-        <text class="empty-text">还没有过往记录，写下今天的第一篇吧 🌱</text>
-      </view>
-
-      <!-- Unlock More Row -->
-      <view class="unlock-row" bindtap="onUnlockMore">
-        <text class="unlock-text">更多  解锁全部历史记录</text>
-        <text class="vip-badge">会员</text>
-      </view>
-    </view>
-
-  </scroll-view>
+<!-- 搜索框 -->
+<view class="search-bar">
+  <view class="search-inner">
+    <text class="search-icon">🔍</text>
+    <input
+      class="search-input"
+      placeholder="搜索日记..."
+      placeholder-style="color: #BDBDBD;"
+      value="{{searchKeyword}}"
+      bindinput="onSearchInput"
+    />
+    <text
+      class="search-clear"
+      wx:if="{{searchKeyword}}"
+      bindtap="onSearchClear"
+    >✕</text>
+  </view>
 </view>
 
+<!-- 情绪筛选 Tab -->
+<scroll-view scroll-x class="mood-filter-bar">
+  <view class="mood-filter-inner">
+    <block wx:for="{{moodFilters}}" wx:key="key">
+      <view
+        class="mood-filter-item {{activeMoodFilter === item.key ? 'mood-filter-active' : ''}}"
+        bindtap="onMoodFilterTap"
+        data-key="{{item.key}}"
+      >
+        <!-- 全部用文字，其他用图片 -->
+        <text wx:if="{{item.key === 'ALL'}}" class="filter-all-text">📋</text>
+        <image wx:else class="filter-image" src="{{item.image}}" mode="aspectFit" />
+        <text class="filter-label">{{item.label}}</text>
+      </view>
+    </block>
+  </view>
+</scroll-view>
+
+<!-- 日记列表 -->
+<scroll-view scroll-y class="scroll-content">
+
+  <block wx:if="{{monthGroups.length > 0}}">
+    <block wx:for="{{monthGroups}}" wx:key="monthLabel">
+      <view class="month-header">
+        <text class="month-label">📅 {{item.monthLabel}}</text>
+      </view>
+      <block wx:for="{{item.entries}}" wx:key="date" wx:for-item="entry">
+        <view
+          class="entry-card"
+          bindtap="onEntryTap"
+          data-date="{{entry.date}}"
+        >
+          <view class="entry-left">
+            <image class="entry-mood-image" src="{{entry.moodImage}}" mode="aspectFit" />
+          </view>
+          <view class="entry-middle">
+            <text class="entry-date">{{entry.displayDate}}</text>
+            <text class="entry-preview">{{entry.preview}}</text>
+          </view>
+          <view class="entry-right">
+            <text class="entry-arrow">→</text>
+          </view>
+        </view>
+      </block>
+    </block>
+  </block>
+
+  <view class="empty-state" wx:elif="{{!loading}}">
+    <text class="empty-emoji">📔</text>
+    <text class="empty-text">还没有日记</text>
+    <text class="empty-sub">点击右下角按钮开始写第一篇</text>
+  </view>
+
+  <view class="bottom-spacer"></view>
+</scroll-view>
+
+<!-- FAB -->
+<view class="fab" bindtap="onNewDiary">
+  <text class="fab-icon">✏️</text>
+</view>
+
+</view>
