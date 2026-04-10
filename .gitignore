@@ -36,3 +36,9 @@ yarn-error.log
 # WeChat DevTools private config (local only)
 project.private.config.json
 
+# ============================================
+# Security: Local config with real secrets
+# ============================================
+config.ts
+
+

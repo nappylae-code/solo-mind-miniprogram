@@ -86,7 +86,7 @@ Sub Pages
 
 | Item | Details |
 |------|---------|
-| Cloud Environment ID | `cloud1-3gh5mibgd5111425` |
+| Cloud Environment ID | `your-cloud-env-id` |
 | Database Collection | `moodEntries` |
 | Data Permission | Creator read/write only |
 
