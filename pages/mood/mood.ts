@@ -1,9 +1,9 @@
 import { MOODS, getMoodByKey, MoodType } from '../../constants/mood';
 import { saveMoodToCloud, loadMoodFromCloud } from '../../utils/cloudDB';
+import { getUserId } from '../../utils/encryption';
 
 declare const wx: any;
 
-const USER_ID_KEY = 'userId';
 const NOTE_MAX_LENGTH = 500;
 
 // ============================================
@@ -119,7 +119,7 @@ Page({
 
   async loadData() {
     try {
-      const userId = wx.getStorageSync(USER_ID_KEY);
+      const userId = getUserId();
       if (!userId) {
         this.setData({ ready: true });
         wx.redirectTo({ url: '/pages/index/index' });

@@ -91,6 +91,10 @@ export async function loadMoodFromCloud(
     const { data } = await db.collection(COLLECTION_NAME)
       .where({ userId })
       .orderBy('date', 'desc')
+      // TODO: limit is currently set to 100 for free users.
+      // In future, this should be dynamic based on user tier:
+      // - Free users: 100 entries (~3 months)
+      // - Members / VIPs: higher limit or unlimited
       .limit(100)
       .get();
 

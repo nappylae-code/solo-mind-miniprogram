@@ -3,6 +3,7 @@ import * as CryptoJS from 'crypto-js';
 declare const wx: any;
 
 const FALLBACK_SECRET = 'SoloMind-AES-Secret-2026';
+const USER_ID_STORAGE_KEY = 'userId';
 
 // ============================================
 // Override CryptoJS random with wx.getRandomValues
@@ -13,7 +14,6 @@ function setupWxCryptoRandom(): void {
   try {
     CryptoJS.lib.WordArray.random = function(nBytes: number): any {
       const words: number[] = [];
-      const array = new Uint8Array(nBytes);
 
       if (typeof wx !== 'undefined' && wx.getRandomValues) {
         wx.getRandomValues({ length: nBytes, success: (res: any) => {
@@ -28,17 +28,7 @@ function setupWxCryptoRandom(): void {
           }
         }});
       } else {
-        for (let i = 0; i < nBytes; i++) {
-          array[i] = Math.floor(Math.random() * 256);
-        }
-        for (let i = 0; i < nBytes; i += 4) {
-          words.push(
-            ((array[i] || 0) << 24) |
-            ((array[i + 1] || 0) << 16) |
-            ((array[i + 2] || 0) << 8) |
-            (array[i + 3] || 0)
-          );
-        }
+        throw new Error('wx.getRandomValues is not available. Secure random number generation failed.');
       }
 
       return CryptoJS.lib.WordArray.create(words, nBytes);
@@ -138,4 +128,35 @@ export async function deleteSecureItem(key: string): Promise<void> {
     throw error;
   }
 }
+
+// ============================================
+// Save userId with AES encryption
+// Uses FALLBACK_SECRET only (not userId-derived key)
+// to avoid chicken-and-egg problem
+// ============================================
+export function saveUserId(userId: string): void {
+  const key = CryptoJS.SHA256(FALLBACK_SECRET).toString();
+  const encrypted = CryptoJS.AES.encrypt(userId, key).toString();
+  wx.setStorageSync(USER_ID_STORAGE_KEY, encrypted);
+}
+
+// ============================================
+// Get and decrypt userId
+// Handles backward compatibility with plain text userId
+// ============================================
+export function getUserId(): string | null {
+  try {
+    const value = wx.getStorageSync(USER_ID_STORAGE_KEY);
+    if (!value) return null;
+    // Backward compatibility: if not encrypted, return as-is
+    if (!isEncrypted(value)) return value;
+    const key = CryptoJS.SHA256(FALLBACK_SECRET).toString();
+    const bytes = CryptoJS.AES.decrypt(value, key);
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    return decrypted || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 
