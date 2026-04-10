@@ -6,6 +6,6 @@
   <view class="check-badge" wx:if="{{selected}}">
     <text class="check-icon">✓</text>
   </view>
-  <text class="emoji">{{mood.emoji}}</text>
+  <image class="mood-image" src="{{mood.image}}" mode="aspectFit" />
   <text class="label">{{mood.label}}</text>
 </view>
