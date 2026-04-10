@@ -106,8 +106,8 @@
 /* ===== Note Input (compact) ===== */
 .note-input {
   width: 100%;
-  min-height: 100rpx;
-  max-height: 160rpx;
+  min-height: 80rpx;
+  max-height: 120rpx;
   background-color: #FAFAFA;
   border: 2rpx solid #EEEEEE;
   border-radius: 16rpx;

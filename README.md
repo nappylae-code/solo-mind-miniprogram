@@ -1,62 +1,98 @@
+# SoloMind 🧠
+
+> A WeChat Mini Program for daily mood tracking and emotional self-care.
 
 ---
 
-## ✅ 已实现功能
+## 📱 Pages
 
-- 🔐 微信身份授权登录（`getUserProfile`）
-- 😊 每日情绪记录（5 种情绪 + 备注，最多 500 字）
-- ☁️ 情绪数据存储至微信云开发数据库
-- 📅 每周日历视图 & 连续打卡天数统计
-- 🔒 AES 加密 & 安全 UUID 生成
-
----
-
-## ☁️ 云开发配置
-
-| 项目 | 详情 |
-|---|---|
-| **云环境 ID** | `cloud1-3gh5mibgd5111425` |
-| **数据库集合** | `moodEntries` |
-| **数据权限** | 仅创建者可读写 |
-
-### 云数据库字段 (`moodEntries`)
-
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `userId` | String | 用户唯一标识 |
-| `date` | String | 日期（YYYY-MM-DD）|
-| `moodKey` | String | 情绪类型 |
-| `note` | String | 备注（最多 500 字）|
-| `timestamp` | Number | 时间戳 |
+| Page | Status | Description |
+|------|--------|-------------|
+| **Home / Mood** (`pages/mood`) | ✅ Live | Daily mood check-in, weekly calendar, streak tracking |
+| **Diary** (`pages/diary`) | 🚧 In Progress | Personal diary entries |
+| **Community** (`pages/community`) | 🚧 In Progress | Community posts & social feed |
+| **Profile** (`pages/profile`) | 🚧 In Progress | User profile & settings |
 
 ---
 
-## 🚀 快速开始
+## ✅ Implemented Features
 
-1. 用微信开发者工具导入项目，填入真实 **AppID**
-2. 菜单：**工具 → 构建 npm**
-3. 点击「编译」运行
-
-> ⚠️ 需使用**真实 AppID**（测试号不支持云开发）
-
----
-
-## 🔧 常见问题
-
-| 问题 | 解决方案 |
-|---|---|
-| npm 模块找不到 | 执行「构建 npm」 |
-| 云开发初始化失败 | 确认使用真实 AppID 且已开通云开发 |
-| 情绪数据保存失败 | 检查网络 & 确认 `moodEntries` 集合已创建 |
-| `getUserProfile` 失败 | 在微信模拟器或真机运行 |
+- 🔐 **WeChat Login** — Identity authorization via `getUserProfile`
+- 😊 **Daily Mood Check-in** — Choose from 5 moods (😃 太棒了 / 😊 开心 / 😌 平静 / 😢 难过 / 😡 生气) with optional note (max 500 characters)
+- ☁️ **Cloud Storage** — Mood data saved to WeChat Cloud Database (`moodEntries`)
+- 📅 **Weekly Calendar View** — Visual 7-day mood tracker
+- 🔥 **Streak Counter** — Tracks consecutive check-in days
+- 💬 **Daily Quote** — Rotating motivational quote based on the date
+- 🔒 **AES Encryption & Secure UUID** — User data security via `crypto-js`
 
 ---
 
-## 🏗️ 技术栈
+## 😊 Mood Types
 
-`TypeScript` · `WXML` · `WXSS` · `crypto-js` · `wx.cloud` · `wx.storage`
+| Key | Emoji | Label | Color |
+|-----|-------|-------|-------|
+| `GREAT` | 😃 | 太棒了 | `#4CAF50` |
+| `HAPPY` | 😊 | 开心 | `#8BC34A` |
+| `CALM` | 😌 | 平静 | `#2196F3` |
+| `SAD` | 😢 | 难过 | `#F44336` |
+| `ANGRY` | 😡 | 生气 | `#E91E63` |
 
-最低支持微信版本：**7.0.0+**
+---
+
+## ☁️ Cloud Configuration
+
+| Item | Details |
+|------|---------|
+| **Cloud Environment ID** | `cloud1-3gh5mibgd5111425` |
+| **Database Collection** | `moodEntries` |
+| **Data Permission** | Creator read/write only |
+
+### Database Fields (`moodEntries`)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `userId` | String | Unique user identifier |
+| `date` | String | Date in `YYYY-MM-DD` format |
+| `moodKey` | String | Mood type key (e.g. `GREAT`, `CALM`) |
+| `note` | String | Optional note (max 500 characters) |
+| `timestamp` | Number | Unix timestamp |
+
+---
+
+## 🏗️ Tech Stack
+
+| Technology | Usage |
+|------------|-------|
+| `TypeScript` | App logic |
+| `WXML` | UI markup |
+| `WXSS` | Styling |
+| `crypto-js ^4.2.0` | AES encryption & UUID |
+| `wx.cloud` | Cloud database & storage |
+| `wx.storage` | Local storage (userId, nickname, avatar) |
+
+> Minimum supported WeChat version: **7.0.0+**
+
+---
+
+## 🚀 Quick Start
+
+1. Clone the repo and open in **Weixin DevTools**
+2. Fill in your real **AppID** in `project.config.json`
+3. Go to **Tools → Build npm**
+4. Click **Compile** to run
+
+> ⚠️ A real AppID is required — test accounts do not support Cloud Development.
+
+---
+
+## 🔧 Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| npm module not found | Run **Tools → Build npm** |
+| Cloud init fails | Confirm real AppID and Cloud Development is enabled |
+| Mood data not saving | Check network & confirm `moodEntries` collection exists in cloud DB |
+| `getUserProfile` fails | Run on WeChat simulator or a real device |
 
 ---
 
