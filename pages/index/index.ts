@@ -1,3 +1,5 @@
+import { saveUserId } from '../../utils/encryption';
+
 declare const wx: any;
 
 // ============================================
@@ -77,7 +79,7 @@ Page({
     try {
       const userId = generateUUID();
 
-      wx.setStorageSync('userId', userId);
+      saveUserId(userId);
       wx.setStorageSync('userNickname', nickname.trim());
       wx.setStorageSync('userAvatarUrl', avatarUrl);
       wx.setStorageSync('isLoggedIn', true);

@@ -1,4 +1,5 @@
 import { saveMoodToCloud, loadMoodFromCloud, CloudMoodEntry } from '../../utils/cloudDB';
+import { getUserId } from '../../utils/encryption';
 
 declare const wx: any;
 
@@ -91,7 +92,7 @@ Page({
 
   async loadData() {
     try {
-      const userId = wx.getStorageSync(USER_ID_KEY);
+      const userId = getUserId();
       if (!userId) {
         wx.redirectTo({ url: '/pages/index/index' });
         return;
