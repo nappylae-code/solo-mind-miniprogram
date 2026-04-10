@@ -19,7 +19,7 @@
   </view>
 </view>
 
-<!-- 情绪筛选 Tab -->
+<!-- 情绪筛选 Tab：emoji上 + 文字下，竖排 -->
 <scroll-view scroll-x class="mood-filter-bar">
   <view class="mood-filter-inner">
     <block wx:for="{{moodFilters}}" wx:key="key">
@@ -28,8 +28,8 @@
         bindtap="onMoodFilterTap"
         data-key="{{item.key}}"
       >
-        <text wx:if="{{item.emoji}}">{{item.emoji}} </text>
-        <text>{{item.key === 'ALL' ? '全部' : item.label}}</text>
+        <text class="filter-emoji">{{item.key === 'ALL' ? '📋' : item.emoji}}</text>
+        <text class="filter-label">{{item.key === 'ALL' ? '全部' : item.label}}</text>
       </view>
     </block>
   </view>
@@ -38,15 +38,11 @@
 <!-- 日记列表 -->
 <scroll-view scroll-y class="scroll-content">
 
-  <!-- 有数据 -->
   <block wx:if="{{monthGroups.length > 0}}">
     <block wx:for="{{monthGroups}}" wx:key="monthLabel">
-      <!-- 月份标题 -->
       <view class="month-header">
         <text class="month-label">📅 {{item.monthLabel}}</text>
       </view>
-
-      <!-- 该月日记列表 -->
       <block wx:for="{{item.entries}}" wx:key="date" wx:for-item="entry">
         <view
           class="entry-card"
@@ -68,14 +64,12 @@
     </block>
   </block>
 
-  <!-- 空状态 -->
   <view class="empty-state" wx:elif="{{!loading}}">
     <text class="empty-emoji">📔</text>
     <text class="empty-text">还没有日记</text>
     <text class="empty-sub">点击右下角按钮开始写第一篇</text>
   </view>
 
-  <!-- 底部占位 -->
   <view class="bottom-spacer"></view>
 </scroll-view>
 

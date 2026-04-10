@@ -39,7 +39,7 @@
   padding: 4rpx 8rpx;
 }
 
-/* ===== 情绪筛选 Tab ===== */
+/* ===== 情绪筛选 Tab（竖排：emoji + 文字）===== */
 .mood-filter-bar {
   background-color: #F5F5F5;
   white-space: nowrap;
@@ -54,18 +54,30 @@
 
 .mood-filter-item {
   display: inline-flex;
+  flex-direction: column;    /* ✅ 竖排 */
   align-items: center;
-  padding: 10rpx 24rpx;
-  border-radius: 32rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 16rpx;
   background-color: #EEEEEE;
-  font-size: 26rpx;
-  color: #757575;
-  white-space: nowrap;
   flex-shrink: 0;
+  gap: 4rpx;
+  min-width: 80rpx;
 }
 
 .mood-filter-active {
   background-color: #4CAF50;
+}
+
+.filter-emoji {
+  font-size: 32rpx;
+}
+
+.filter-label {
+  font-size: 20rpx;
+  color: #757575;
+}
+
+.mood-filter-active .filter-label {
   color: #FFFFFF;
 }
 
