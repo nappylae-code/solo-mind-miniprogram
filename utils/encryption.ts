@@ -1,8 +1,9 @@
 import * as CryptoJS from 'crypto-js';
+import config from '../config';
 
 declare const wx: any;
 
-const FALLBACK_SECRET = 'SoloMind-AES-Secret-2026';
+const FALLBACK_SECRET = config.AES_SECRET_KEY;
 const USER_ID_STORAGE_KEY = 'userId';
 
 // ============================================
