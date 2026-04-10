@@ -1,10 +1,9 @@
 import { MOODS, getMoodByKey, MoodType } from '../../constants/mood';
 import { saveMoodToCloud, loadMoodFromCloud } from '../../utils/cloudDB';
 import { getUserId } from '../../utils/encryption';
+import { isMember, MEMBERSHIP } from '../../constants/membership';
 
 declare const wx: any;
-
-const NOTE_MAX_LENGTH = 500;
 
 // ============================================
 // Daily Quotes - rotates based on date
@@ -102,14 +101,21 @@ Page({
     greeting: '',
     dateString: '',
     dailyQuote: '',        // ✅ now properly initialized
+    noteLimit: MEMBERSHIP.MOOD_NOTE_LIMIT_FREE,
+    isMember: false,
   },
 
   onLoad() {
+    const member = isMember();
     this.setData({
       MOODS,
       greeting: getGreeting(),
       dateString: getDateString(),
       dailyQuote: getDailyQuote(),   // ✅ set on load
+      isMember: member,                                          
+      noteLimit: member                                          
+        ? MEMBERSHIP.MOOD_NOTE_LIMIT_MEMBER
+        : MEMBERSHIP.MOOD_NOTE_LIMIT_FREE,
     });
   },
 
@@ -224,9 +230,14 @@ Page({
 
   onNoteInput(e: WechatMiniprogram.Input) {
     const value = e.detail.value;
-    if (value.length > NOTE_MAX_LENGTH) {
-      this.setData({ note: value.slice(0, NOTE_MAX_LENGTH) });
-      wx.showToast({ title: `最多输入${NOTE_MAX_LENGTH}个字`, icon: 'none', duration: 1500 });
+    const { noteLimit } = this.data;           
+    if (value.length > noteLimit) {            
+      this.setData({ note: value.slice(0, noteLimit) }); 
+      wx.showToast({
+        title: `最多输入${noteLimit}个字`,   
+        icon: 'none',
+        duration: 1500
+      });
       return;
     }
     this.setData({ note: value });

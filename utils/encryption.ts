@@ -161,3 +161,16 @@ export function getUserId(): string | null {
 }
 
 
+// ============================================
+// Encrypt a single field (for cloudDB use)
+// ============================================
+export function encryptField(plainText: string): string {
+  return encryptData(plainText);
+}
+
+// ============================================
+// Decrypt a single field (for cloudDB use)
+// ============================================
+export function decryptField(cipherText: string): string | null {
+  return decryptData(cipherText);
+}
