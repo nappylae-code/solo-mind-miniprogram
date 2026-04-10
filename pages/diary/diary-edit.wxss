@@ -18,39 +18,11 @@
   margin-bottom: 16rpx;
 }
 
-.mood-scroll {
-  white-space: nowrap;
-}
-
+/* MoodCard 横排，与 mood 页面一致 */
 .mood-row {
   display: flex;
   flex-direction: row;
-  gap: 12rpx;
-}
-
-.mood-item {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12rpx 20rpx;
-  border-radius: 16rpx;
-  border: 2rpx solid #EEEEEE;
-  background-color: #FAFAFA;
-  gap: 4rpx;
-  flex-shrink: 0;
-}
-
-.mood-item-active {
-  border-width: 2rpx;
-}
-
-.mood-emoji {
-  font-size: 36rpx;
-}
-
-.mood-label {
-  font-size: 20rpx;
-  color: #9E9E9E;
+  justify-content: space-around;
 }
 
 /* ===== 输入区 ===== */
@@ -89,7 +61,6 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 16rpx;
 }
 
 .save-btn {
