@@ -56,7 +56,7 @@ App<IAppOption>({
     // Initialize WeChat Cloud Base
     if (wx.cloud) {
       wx.cloud.init({
-        env: 'cloud1-3gh5mibgd5111425',
+        env: 'YOUR_CLOUD_ENV_ID', // Replace with your actual cloud environment ID locally
         traceUser: true
       });
     }

@@ -2,7 +2,9 @@ import * as CryptoJS from 'crypto-js';
 
 declare const wx: any;
 
-const FALLBACK_SECRET = 'SoloMind-AES-Secret-2026';
+const FALLBACK_SECRET = 'YOUR_AES_SECRET_KEY'; // Replace with your actual secret key locally
+// 替换为你自定义的 AES 加密密钥
+// 建议使用 32 位以上的随机字符串
 const USER_ID_STORAGE_KEY = 'userId';
 
 // ============================================
