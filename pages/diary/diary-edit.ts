@@ -115,7 +115,7 @@ Page({
           const mood = getMoodByKey(selectedMoodKey);
           prevPage.setData({
             content: content.trim(),
-            moodEmoji: mood ? mood.emoji : '📝',
+            moodImage: mood ? mood.image : '', 
             moodLabel: mood ? mood.label : '',
             moodColor: mood ? mood.color : '#9E9E9E',
           });
