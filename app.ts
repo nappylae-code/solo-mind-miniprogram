@@ -1,3 +1,5 @@
+import config from './config';
+
 // app.ts
 // ============================================
 // Polyfill for Node.js crypto module in WeChat Mini Program
@@ -56,7 +58,7 @@ App<IAppOption>({
     // Initialize WeChat Cloud Base
     if (wx.cloud) {
       wx.cloud.init({
-        env: 'YOUR_CLOUD_ENV_ID', // Replace with your actual cloud environment ID locally
+        env: config.CLOUD_ENV_ID, // Replace with your actual cloud environment ID locally
         traceUser: true
       });
     }
