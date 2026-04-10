@@ -3,7 +3,6 @@ import { getUserId } from '../../utils/encryption';
 
 declare const wx: any;
 
-const USER_ID_KEY = 'userId';
 const MAX_RECENT = 3;
 const PREVIEW_LENGTH = 150;
 

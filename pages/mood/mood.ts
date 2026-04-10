@@ -4,7 +4,6 @@ import { getUserId } from '../../utils/encryption';
 
 declare const wx: any;
 
-const USER_ID_KEY = 'userId';
 const NOTE_MAX_LENGTH = 500;
 
 // ============================================
