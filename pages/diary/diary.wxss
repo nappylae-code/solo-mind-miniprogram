@@ -48,15 +48,15 @@
 .write-card {
   background-color: #FFFFFF;
   border-radius: 16rpx;
-  padding: 24rpx 32rpx;
+  padding: 20rpx 32rpx;      /* ⬇️ changed from 24rpx to 20rpx */
   margin-bottom: 24rpx;
-  min-height: 240rpx;
+  min-height: 160rpx;        /* ⬇️ changed from 240rpx to 160rpx */
   box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06);
 }
 
 .diary-input {
   width: 100%;
-  min-height: 200rpx;
+  min-height: 120rpx;        /* ⬇️ changed from 200rpx to 120rpx */
   font-size: 30rpx;
   color: #212121;
   line-height: 1.8;
@@ -70,7 +70,7 @@
   font-size: 32rpx;
   font-weight: 600;
   border-radius: 16rpx;
-  padding: 20rpx 0;
+  padding: 14rpx 0;          /* ⬇️ changed from 20rpx to 14rpx */
   border: none;
   margin-bottom: 40rpx;
 }
