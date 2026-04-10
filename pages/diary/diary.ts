@@ -36,7 +36,7 @@ function getPreview(content: string): string {
 interface DiaryItem {
   date: string;
   displayDate: string;
-  moodEmoji: string;
+  moodImage: string;
   moodKey: string;
   preview: string;
   content: string;
@@ -52,12 +52,12 @@ interface MonthGroup {
 // 情绪筛选 Tab
 // ============================================
 const MOOD_FILTERS = [
-  { key: 'ALL', label: '全部', emoji: '' },
-  { key: 'GREAT', label: '极好', emoji: '😄' },
-  { key: 'HAPPY', label: '开心', emoji: '🙂' },
-  { key: 'CALM', label: '平静', emoji: '😌' },
-  { key: 'SAD', label: '难过', emoji: '😢' },
-  { key: 'ANGRY', label: '生气', emoji: '😠' },
+  { key: 'ALL',   label: '全部', image: '' },
+  { key: 'GREAT', label: '极好', image: '/assets/moods/great.png' },
+  { key: 'HAPPY', label: '开心', image: '/assets/moods/happy.png' },
+  { key: 'CALM',  label: '平静', image: '/assets/moods/calm.png'  },
+  { key: 'SAD',   label: '难过', image: '/assets/moods/sad.png'   },
+  { key: 'ANGRY', label: '生气', image: '/assets/moods/angry.png' },
 ];
 
 Page({
@@ -96,7 +96,7 @@ Page({
           return {
             date,
             displayDate: formatFullDate(date),
-            moodEmoji: mood ? mood.emoji : '📝',
+            moodImage: mood ? mood.image : '/assets/moods/calm.png',
             moodKey: entry.moodKey || '',
             preview: getPreview(entry.content || ''),
             content: entry.content || '',

@@ -43,8 +43,10 @@
   line-height: 22rpx;
 }
 
-.emoji {
-  font-size: 56rpx;
+/* ✅ emoji 改为图片 */
+.mood-image {
+  width: 72rpx;
+  height: 72rpx;
   margin-bottom: 4rpx;
 }
 

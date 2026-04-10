@@ -19,7 +19,7 @@
   </view>
 </view>
 
-<!-- 情绪筛选 Tab：emoji上 + 文字下，竖排 -->
+<!-- 情绪筛选 Tab -->
 <scroll-view scroll-x class="mood-filter-bar">
   <view class="mood-filter-inner">
     <block wx:for="{{moodFilters}}" wx:key="key">
@@ -28,8 +28,10 @@
         bindtap="onMoodFilterTap"
         data-key="{{item.key}}"
       >
-        <text class="filter-emoji">{{item.key === 'ALL' ? '📋' : item.emoji}}</text>
-        <text class="filter-label">{{item.key === 'ALL' ? '全部' : item.label}}</text>
+        <!-- 全部用文字，其他用图片 -->
+        <text wx:if="{{item.key === 'ALL'}}" class="filter-all-text">📋</text>
+        <image wx:else class="filter-image" src="{{item.image}}" mode="aspectFit" />
+        <text class="filter-label">{{item.label}}</text>
       </view>
     </block>
   </view>
@@ -50,7 +52,7 @@
           data-date="{{entry.date}}"
         >
           <view class="entry-left">
-            <text class="entry-emoji">{{entry.moodEmoji}}</text>
+            <image class="entry-mood-image" src="{{entry.moodImage}}" mode="aspectFit" />
           </view>
           <view class="entry-middle">
             <text class="entry-date">{{entry.displayDate}}</text>
@@ -73,7 +75,7 @@
   <view class="bottom-spacer"></view>
 </scroll-view>
 
-<!-- FAB 悬浮新建按钮 -->
+<!-- FAB -->
 <view class="fab" bindtap="onNewDiary">
   <text class="fab-icon">✏️</text>
 </view>

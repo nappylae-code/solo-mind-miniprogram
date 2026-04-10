@@ -23,6 +23,7 @@ Page({
     moodColor: '',
     timestamp: 0,
     loading: true,
+    moodImage: '',
   },
 
   onLoad(options: { date?: string }) {
@@ -50,7 +51,7 @@ Page({
       this.setData({
         displayDate: formatDetailDate(date, entry.timestamp),
         content: entry.content || '',
-        moodEmoji: mood ? mood.emoji : '📝',
+        moodImage: mood ? mood.image : '',
         moodLabel: mood ? mood.label : '',
         moodColor: mood ? mood.color : '#9E9E9E',
         timestamp: entry.timestamp,

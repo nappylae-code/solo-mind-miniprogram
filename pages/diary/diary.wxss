@@ -200,3 +200,19 @@
 .fab-icon {
   font-size: 40rpx;
 }
+
+/* 情绪筛选图片 */
+.filter-image {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.filter-all-text {
+  font-size: 32rpx;
+}
+
+/* 列表项情绪图片 */
+.entry-mood-image {
+  width: 56rpx;
+  height: 56rpx;
+}

@@ -3,7 +3,7 @@
 <!-- 情绪标签 -->
 <view class="mood-section">
   <view class="mood-badge" style="background-color: {{moodColor}}20; border-color: {{moodColor}};">
-    <text class="mood-emoji">{{moodEmoji}}</text>
+    <image class="mood-image" src="{{moodImage}}" mode="aspectFit" wx:if="{{moodImage}}" />
     <text class="mood-label" style="color: {{moodColor}};">{{moodLabel}}</text>
   </view>
   <text class="detail-date">{{displayDate}}</text>
