@@ -1,19 +1,16 @@
 declare const wx: any;
 
 // ============================================
-// Generate a UUID v4 using synchronous random
-// crypto.getRandomValues is supported in
-// WeChat MiniProgram base library 2.17.3+
+// Generate a UUID v4 using wx.getRandomValues
+// Directly uses wx API — no polyfill dependency
 // ============================================
 function generateUUID(): string {
   const array = new Uint8Array(16);
 
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    crypto.getRandomValues(array);
+  if (typeof wx !== 'undefined' && wx.getRandomValues) {
+    wx.getRandomValues(array);
   } else {
-    for (let i = 0; i < 16; i++) {
-      array[i] = Math.floor(Math.random() * 256);
-    }
+    throw new Error('wx.getRandomValues is not available. Secure random number generation failed.');
   }
 
   array[6] = (array[6] & 0x0f) | 0x40;
