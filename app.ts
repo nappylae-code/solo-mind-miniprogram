@@ -60,7 +60,6 @@ App<IAppOption>({
         traceUser: true
       });
     }
-    console.log('SoloMind Mini Program launched');
   },
 
   globalData: {
