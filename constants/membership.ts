@@ -3,6 +3,8 @@
 // 会员权限配置
 // ============================================
 
+declare const wx: any; // ← 必须在顶部
+
 export const MEMBERSHIP = {
   // 情绪备注字数限制
   MOOD_NOTE_LIMIT_FREE: 50,
@@ -13,7 +15,7 @@ export const MEMBERSHIP = {
   DIARY_CONTENT_LIMIT_MEMBER: 2000,
 
   // 日记图片（会员专属）
-  DIARY_IMAGE_ENABLED: false, // 免费版不支持
+  DIARY_IMAGE_ENABLED: false,
 } as const;
 
 // ============================================
@@ -28,5 +30,3 @@ export function isMember(): boolean {
     return false;
   }
 }
-
-declare const wx: any;
