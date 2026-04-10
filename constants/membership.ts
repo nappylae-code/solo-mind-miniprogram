@@ -7,8 +7,8 @@ declare const wx: any; // ← 必须在顶部
 
 export const MEMBERSHIP = {
   // 情绪备注字数限制
-  MOOD_NOTE_LIMIT_FREE: 50,
-  MOOD_NOTE_LIMIT_MEMBER: 100,
+  MOOD_NOTE_LIMIT_FREE: 20,
+  MOOD_NOTE_LIMIT_MEMBER: 50,
 
   // 日记字数限制
   DIARY_CONTENT_LIMIT_FREE: 500,
@@ -18,15 +18,9 @@ export const MEMBERSHIP = {
   DIARY_IMAGE_ENABLED: false,
 } as const;
 
-// ============================================
-// 检查是否是会员
-// 目前先返回 false，后续接入真实会员系统
-// ============================================
+// constants/membership.ts
+// 会员系统待第二阶段实现（微信支付 + 云端验证）
+// 目前恒返回 false，不做本地存储
 export function isMember(): boolean {
-  try {
-    const memberStatus = wx.getStorageSync('isMember');
-    return memberStatus === true;
-  } catch {
-    return false;
-  }
+  return false;
 }

@@ -19,10 +19,10 @@ const DAILY_QUOTES: string[] = [
   '照顾好自己，才能照顾好一切。🌙',
   '深呼吸，一切都会好起来的。🕊️',
   '你的感受很重要，别忽视它。💙',
-  '今天也要好好吃饭，好好休息。🍚',
+  '今天也要好好吃饭，好好休息。🏠',
   '把烦恼写下来，心里会轻松一点。📝',
   '感谢今天遇见的每一个小美好。🌻',
-  '不完美的一天，也是完整的一天。🌝',
+  '不完美的一天，也是完整的一天。🌿',
 ];
 
 function getDailyQuote(): string {
@@ -39,7 +39,6 @@ interface MoodEntry {
   note?: string;
 }
 
-// Utility functions
 function getTodayKey(): string {
   const now = new Date();
   const year = now.getFullYear();
@@ -51,29 +50,26 @@ function getTodayKey(): string {
 function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 6) return '凌晨好';
-  if (hour < 12) return '上午好';
+  if (hour < 12) return '早上好';
   if (hour < 14) return '中午好';
   if (hour < 18) return '下午好';
   return '晚上好';
 }
 
+// ✅ 新格式：2026年4月10日 星期五
 function getDateString(): string {
   const now = new Date();
-  const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-  const months = ['一月', '二月', '三月', '四月', '五月', '六月',
-                  '七月', '八月', '九月', '十月', '十一月', '十二月'];
-  return `${months[now.getMonth()]} ${now.getDate()}日 ${days[now.getDay()]}`;
+  const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  const dayOfWeek = days[now.getDay()];
+  return `${year}年${month}月${day}日 ${dayOfWeek}`;
 }
 
 function getDayOfWeekLabel(date: Date): string {
-  const labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  const labels = ['一', '二', '三', '四', '五', '六', '日'];
   return labels[(date.getDay() + 6) % 7];
-}
-
-function formatDateLabel(date: Date): string {
-  const months = ['一月', '二月', '三月', '四月', '五月', '六月',
-                  '七月', '八月', '九月', '十月', '十一月', '十二月'];
-  return `${months[date.getMonth()]} ${date.getDate()}`;
 }
 
 function startOfWeek(date: Date): Date {
@@ -82,6 +78,13 @@ function startOfWeek(date: Date): Date {
   d.setDate(d.getDate() - ((day + 6) % 7));
   d.setHours(0, 0, 0, 0);
   return d;
+}
+
+// ✅ 根据 moodKey 返回对应 emoji，未打卡返回空字符串
+function getMoodEmoji(moodKey: string | undefined): string {
+  if (!moodKey) return '';
+  const mood = getMoodByKey(moodKey);
+  return mood ? mood.emoji : '';
 }
 
 Page({
@@ -95,12 +98,17 @@ Page({
     selectedMood: null as string | null,
     selectedMoodObj: null as MoodType | null,
     note: '',
-    weekDays: [] as Array<{ label: string; hasEntry: boolean }>,
-    weekLabel: '',
+    // ✅ 新增 isToday 和 moodEmoji 字段
+    weekDays: [] as Array<{
+      label: string;
+      hasEntry: boolean;
+      isToday: boolean;
+      moodEmoji: string;
+    }>,
     streak: 0,
     greeting: '',
     dateString: '',
-    dailyQuote: '',        // ✅ now properly initialized
+    dailyQuote: '',
     noteLimit: MEMBERSHIP.MOOD_NOTE_LIMIT_FREE,
     isMember: false,
   },
@@ -111,9 +119,9 @@ Page({
       MOODS,
       greeting: getGreeting(),
       dateString: getDateString(),
-      dailyQuote: getDailyQuote(),   // ✅ set on load
-      isMember: member,                                          
-      noteLimit: member                                          
+      dailyQuote: getDailyQuote(),
+      isMember: member,
+      noteLimit: member
         ? MEMBERSHIP.MOOD_NOTE_LIMIT_MEMBER
         : MEMBERSHIP.MOOD_NOTE_LIMIT_FREE,
     });
@@ -154,55 +162,50 @@ Page({
   computeWeekData() {
     const { moodEntries } = this.data;
     const now = new Date();
-    let weekStart = startOfWeek(now);
+    const todayKey = getTodayKey();
+    const weekStart = startOfWeek(now);
 
-    let currentWeekDays: Array<{ label: string; hasEntry: boolean }> = [];
+    // ✅ 新增 isToday 和 moodEmoji
+    const weekDays: Array<{
+      label: string;
+      hasEntry: boolean;
+      isToday: boolean;
+      moodEmoji: string;
+    }> = [];
+
     for (let i = 0; i < 7; i++) {
       const d = new Date(weekStart);
       d.setDate(d.getDate() + i);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      currentWeekDays.push({ label: getDayOfWeekLabel(d), hasEntry: !!moodEntries[key] });
+      const entry = moodEntries[key];
+      weekDays.push({
+        label: getDayOfWeekLabel(d),
+        hasEntry: !!entry,
+        isToday: key === todayKey,
+        moodEmoji: getMoodEmoji(entry?.moodKey),
+      });
     }
 
-    const foundInWeek = currentWeekDays.some(day => day.hasEntry);
-    if (!foundInWeek) {
-      const nextWeekStart = new Date(weekStart);
-      nextWeekStart.setDate(nextWeekStart.getDate() + 7);
-      let nextWeekDays: Array<{ label: string; hasEntry: boolean }> = [];
-      let foundNext = false;
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(nextWeekStart);
-        d.setDate(d.getDate() + i);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        if (moodEntries[key]) foundNext = true;
-        nextWeekDays.push({ label: getDayOfWeekLabel(d), hasEntry: !!moodEntries[key] });
-      }
-      if (foundNext) {
-        weekStart = nextWeekStart;
-        currentWeekDays = nextWeekDays;
-      }
-    }
-
-    const weekEnd = new Date(weekStart.getTime() + 6 * 86400000);
-    const weekLabel = `${formatDateLabel(weekStart)} - ${formatDateLabel(weekEnd)}`;
-
-    const todayKey = getTodayKey();
+    // ✅ 修复 Streak 计算逻辑
     const todayEntry = moodEntries[todayKey];
-    let streak = todayEntry ? 1 : 0;
-    const yesterday = new Date(todayKey);
-    yesterday.setDate(yesterday.getDate() - 1);
-    for (let i = 0; i < 30; i++) {
-      const d = new Date(yesterday);
-      d.setDate(d.getDate() - i);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      if (moodEntries[key]) {
-        streak++;
-      } else {
-        break;
+    let streak = 0;
+
+    if (todayEntry) {
+      streak = 1;
+      // 从昨天开始往前逐天检查
+      for (let i = 1; i <= 30; i++) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        if (moodEntries[key]) {
+          streak++;
+        } else {
+          break;
+        }
       }
     }
 
-    this.setData({ weekDays: currentWeekDays, weekLabel, streak });
+    this.setData({ weekDays, streak });
   },
 
   syncTodayEntry() {
@@ -216,7 +219,11 @@ Page({
         note: todayEntry.note || ''
       });
     } else {
-      this.setData({ selectedMood: null, selectedMoodObj: null, note: '' });
+      this.setData({
+        selectedMood: null,
+        selectedMoodObj: null,
+        note: ''
+      });
     }
   },
 
@@ -230,22 +237,17 @@ Page({
 
   onNoteInput(e: WechatMiniprogram.Input) {
     const value = e.detail.value;
-    const { noteLimit } = this.data;           
-    if (value.length > noteLimit) {            
-      this.setData({ note: value.slice(0, noteLimit) }); 
+    const { noteLimit } = this.data;
+    if (value.length > noteLimit) {
+      this.setData({ note: value.slice(0, noteLimit) });
       wx.showToast({
-        title: `最多输入${noteLimit}个字`,   
+        title: `最多输入${noteLimit}个字`,
         icon: 'none',
         duration: 1500
       });
       return;
     }
     this.setData({ note: value });
-  },
-
-  // Navigate to community tab
-  onGoToCommunity() {
-    wx.switchTab({ url: '/pages/community/community' });
   },
 
   async handleSave() {
@@ -261,7 +263,6 @@ Page({
     }
 
     const todayKey = getTodayKey();
-
     wx.showLoading({ title: '保存中...' });
     const success = await saveMoodToCloud({
       userId: userId!,
