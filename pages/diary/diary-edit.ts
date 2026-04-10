@@ -43,8 +43,6 @@ Page({
     try {
       const entries = await loadDiaryFromCloud(userId);
       const entry = entries[date];
-
-      // 自动关联当日情绪
       if (entry) {
         const mood = getMoodByKey(entry.moodKey || '');
         this.setData({
@@ -104,17 +102,42 @@ Page({
       } as CloudDiaryEntry);
 
       wx.hideLoading();
+
       if (success) {
         wx.showToast({ title: '已保存 ✓', icon: 'none', duration: 1500 });
+
+        // ✅ 方案B：通过 EventChannel 把最新数据传回 detail 页
+        const pages = getCurrentPages();
+        const prevPage = pages[pages.length - 2]; // detail 页
+        if (prevPage) {
+          const mood = getMoodByKey(selectedMoodKey);
+          prevPage.setData({
+            content: content.trim(),
+            moodEmoji: mood ? mood.emoji : '📝',
+            moodLabel: mood ? mood.label : '',
+            moodColor: mood ? mood.color : '#9E9E9E',
+          });
+        }
+
         setTimeout(() => wx.navigateBack(), 1500);
       } else {
-        wx.showModal({ title: '保存失败', content: '请检查网络后重试', showCancel: false, confirmText: '确定' });
+        this.setData({ saving: false });
+        wx.showModal({
+          title: '保存失败',
+          content: '请检查网络后重试',
+          showCancel: false,
+          confirmText: '确定',
+        });
       }
     } catch (e) {
       wx.hideLoading();
-      wx.showModal({ title: '保存失败', content: '请检查网络后重试', showCancel: false, confirmText: '确定' });
-    } finally {
       this.setData({ saving: false });
+      wx.showModal({
+        title: '保存失败',
+        content: '请检查网络后重试',
+        showCancel: false,
+        confirmText: '确定',
+      });
     }
   },
 });
