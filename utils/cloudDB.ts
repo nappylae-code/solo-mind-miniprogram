@@ -180,6 +180,7 @@ export async function saveDiaryToCloud(
         .update({
           data: {
             encryptedContent: encryptedContent,
+            moodKey: entry.moodKey || '',
             timestamp: entry.timestamp,
           },
         });
@@ -189,6 +190,7 @@ export async function saveDiaryToCloud(
           userId: entry.userId,
           date: entry.date,
           encryptedContent: encryptedContent,
+          moodKey: entry.moodKey || '',
           timestamp: entry.timestamp,
         },
       });
@@ -212,6 +214,7 @@ export async function loadDiaryFromCloud(
 ): Promise<Record<string, {
   timestamp: number;
   content?: string;
+  moodKey?: string;
 }>> {
   try {
     const db = wx.cloud.database();
@@ -236,6 +239,7 @@ export async function loadDiaryFromCloud(
         entries[item.date] = {
           timestamp: item.timestamp,
           content: content || undefined,
+          moodKey: item.moodKey || undefined,
         };
       }
     }
@@ -275,6 +279,7 @@ function _updateDiaryCache(entry: CloudDiaryEntry): void {
     entries[entry.date] = {
       timestamp: entry.timestamp,
       content: entry.content || undefined,
+      moodKey: entry.moodKey || undefined,
     };
     wx.setStorageSync(DIARY_CACHE_KEY, JSON.stringify(entries));
   } catch {}
