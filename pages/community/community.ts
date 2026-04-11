@@ -5,7 +5,7 @@
 
 import { getUserId } from '../../utils/encryption';
 import {
-  CommunityPost,
+  CommunityPostDecrypted,
   publishCommunityPost,
   loadCommunityPosts,
   loadTodayActiveCount,
@@ -59,7 +59,7 @@ function timeAgo(timestamp: number): string {
 }
 
 // 给帖子附加展示用字段
-function decoratePost(post: CommunityPost): CommunityPost & {
+function decoratePost(post: CommunityPostDecrypted): CommunityPostDecrypted & {
   moodEmoji: string;
   timeAgoStr: string;
   reactionList: { key: ReactionKey; emoji: string; label: string; count: number }[];
@@ -221,7 +221,6 @@ Page({
       reactions: { candle: 0, hug: 0, sparkle: 0 },
     };
 
-    const ok = await publishCommunityPost(post);
     wx.hideLoading();
     this.setData({ publishing: false });
 
@@ -238,42 +237,39 @@ Page({
   // ============================================
   // 预设回应
   // ============================================
-  async onReact(e: WechatMiniprogram.TouchEvent) {
-    const { postid, reactionkey } = e.currentTarget.dataset as {
-      postid: string;
-      reactionkey: ReactionKey;
-    };
-
-    // 本地防重复
-    if (this.data.reactedMap[postid]) {
-      wx.showToast({ title: '已经回应过了', icon: 'none', duration: 1200 });
+  async onPublish() {
+    const { publishSelectedMood, publishContent, userId, publishing } = this.data;
+  
+    if (publishing) return;
+  
+    if (!publishSelectedMood) {
+      wx.showToast({ title: '请先选择心情', icon: 'none' });
       return;
     }
-
-    // 乐观更新 UI
-    const posts = this.data.posts.map((p) => {
-      if (p._id !== postid) return p;
-      const updated = {
-        ...p,
-        reactions: {
-          ...p.reactions,
-          [reactionkey]: (p.reactions?.[reactionkey] ?? 0) + 1,
-        },
-      };
-      // 同步 reactionList
-      updated.reactionList = REACTION_TYPES.map((r) => ({
-        key:   r.key,
-        emoji: r.emoji,
-        label: r.label,
-        count: updated.reactions[r.key] ?? 0,
-      }));
-      return updated;
-    });
-
-    const reactedMap = { ...this.data.reactedMap, [postid]: reactionkey };
-    this.setData({ posts, reactedMap });
-
-    // 云端更新
-    await reactToPost(postid, reactionkey);
+    if (!publishContent.trim()) {
+      wx.showToast({ title: '说点什么吧', icon: 'none' });
+      return;
+    }
+  
+    this.setData({ publishing: true });
+    wx.showLoading({ title: '发布中...' });
+  
+    const ok = await publishCommunityPost(
+      userId,
+      publishSelectedMood,
+      publishContent.trim(),
+      getTodayKey()
+    );
+  
+    wx.hideLoading();
+    this.setData({ publishing: false });
+  
+    if (ok) {
+      this.setData({ showPublishModal: false });
+      wx.showToast({ title: '已匿名发布 🌿', icon: 'none', duration: 1800 });
+      await this.loadAll();
+    } else {
+      wx.showToast({ title: '发布失败，请重试', icon: 'none' });
+    }
   },
 });
