@@ -319,77 +319,128 @@ export async function deleteDiaryFromCloud(
 
 // ============================================
 // COMMUNITY — 广场相关
+// content 字段加密存储，与 moodEntries/diaryEntries 保持一致
 // ============================================
+
+import { encryptField, decryptField } from './encryption';
 
 const COMMUNITY_COLLECTION = 'communityPosts';
 
+// 云端存储结构（content 加密，对后台不可读）
 export interface CommunityPost {
   _id?: string;
-  userId: string;       // 匿名化后的 hash userId，不可反查真实用户
-  moodKey: string;
-  content: string;      // 明文（用户主动公开，无隐私）
+  userId: string;             // hash 后的匿名 ID
+  moodKey: string;            // 明文（枚举值，无隐私）
+  encryptedContent: string;   // ✅ 加密存储
   timestamp: number;
-  date: string;         // YYYY-MM-DD
+  date: string;               // YYYY-MM-DD
   reactions: {
-    candle: number;     // 🕯️ 我懂
-    hug: number;        // 🤗 加油
-    sparkle: number;    // ✨ 真棒
+    candle: number;           // 🕯️ 我懂
+    hug: number;              // 🤗 加油
+    sparkle: number;          // ✨ 真棒
   };
 }
 
-// ── 发布匿名帖子 ──
+// 页面展示用（解密后）
+export interface CommunityPostDecrypted extends Omit<CommunityPost, 'encryptedContent'> {
+  content: string;            // ✅ 解密后的明文，仅在内存中使用
+}
+
+// ── 发布匿名帖子（加密 content 后存入云端）──
 export async function publishCommunityPost(
-  post: Omit<CommunityPost, '_id'>
+  userId: string,
+  moodKey: string,
+  content: string,
+  date: string
 ): Promise<boolean> {
   try {
     const db = wx.cloud.database();
-    await db.collection(COMMUNITY_COLLECTION).add({ data: post });
+
+    // ✅ 加密 content，云端只存 encryptedContent
+    const encryptedContent = encryptField(content);
+
+    await db.collection(COMMUNITY_COLLECTION).add({
+      data: {
+        userId,
+        moodKey,
+        encryptedContent,     // ✅ 加密字段
+        timestamp: Date.now(),
+        date,
+        reactions: { candle: 0, hug: 0, sparkle: 0 },
+      },
+    });
     return true;
   } catch (error) {
     return false;
   }
 }
 
-// ── 加载帖子列表（最新50条，可按 moodKey 筛选）──
+// ── 加载帖子列表（读取后解密 content）──
 export async function loadCommunityPosts(
   moodKey?: string
-): Promise<CommunityPost[]> {
+): Promise<CommunityPostDecrypted[]> {
   try {
     const db = wx.cloud.database();
-    let query = db.collection(COMMUNITY_COLLECTION);
-    const condition: Record<string, any> = {};
-    if (moodKey) condition.moodKey = moodKey;
-    const { data } = await (Object.keys(condition).length > 0
-      ? query.where(condition)
-      : query
-    )
+    const collection = db.collection(COMMUNITY_COLLECTION);
+
+    const query = moodKey
+      ? collection.where({ moodKey })
+      : collection;
+
+    const { data } = await query
       .orderBy('timestamp', 'desc')
       .limit(50)
       .get();
-    return (data as CommunityPost[]) || [];
+
+    if (!data || data.length === 0) return [];
+
+    // ✅ 逐条解密 encryptedContent
+    const results: CommunityPostDecrypted[] = [];
+    for (const item of data) {
+      let content = '';
+      if (item.encryptedContent) {
+        content = decryptField(item.encryptedContent) ?? '';
+      } else if (item.content) {
+        // 兼容旧明文数据（迁移期）
+        content = item.content;
+      }
+
+      // 解密失败的帖子跳过，不展示
+      if (!content) continue;
+
+      results.push({
+        _id:       item._id,
+        userId:    item.userId,
+        moodKey:   item.moodKey,
+        content,                    // ✅ 解密后明文，仅在内存中
+        timestamp: item.timestamp,
+        date:      item.date,
+        reactions: item.reactions ?? { candle: 0, hug: 0, sparkle: 0 },
+      });
+    }
+    return results;
   } catch (error) {
     return [];
   }
 }
 
-// ── 今日活跃人数（按 date 聚合，去重 userId）──
+// ── 今日活跃人数 ──
 export async function loadTodayActiveCount(): Promise<number> {
   try {
     const db = wx.cloud.database();
     const now = new Date();
     const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const { data } = await db
+    const { total } = await db
       .collection(COMMUNITY_COLLECTION)
       .where({ date: todayKey })
       .count();
-    // count() 返回 { total: number }
-    return (data as any)?.total ?? 0;
+    return total ?? 0;
   } catch (error) {
     return 0;
   }
 }
 
-// ── 给帖子点回应（原子 +1）──
+// ── 预设回应（原子 +1，不涉及内容字段）──
 export async function reactToPost(
   postId: string,
   reactionKey: 'candle' | 'hug' | 'sparkle'
@@ -397,9 +448,9 @@ export async function reactToPost(
   try {
     const db = wx.cloud.database();
     const fieldMap = {
-      candle:   'reactions.candle',
-      hug:      'reactions.hug',
-      sparkle:  'reactions.sparkle',
+      candle:  'reactions.candle',
+      hug:     'reactions.hug',
+      sparkle: 'reactions.sparkle',
     };
     await db
       .collection(COMMUNITY_COLLECTION)
