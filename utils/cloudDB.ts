@@ -321,9 +321,6 @@ export async function deleteDiaryFromCloud(
 // COMMUNITY — 广场相关
 // content 字段加密存储，与 moodEntries/diaryEntries 保持一致
 // ============================================
-
-import { encryptField, decryptField } from './encryption';
-
 const COMMUNITY_COLLECTION = 'communityPosts';
 
 // 云端存储结构（content 加密，对后台不可读）
