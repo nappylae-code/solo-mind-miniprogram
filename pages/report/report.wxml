@@ -1,3 +1,141 @@
-<view class="container">
-  <text>情绪报告页（开发中）</text>
+<!-- pages/report/report.wxml -->
+<scroll-view class="container" scroll-y>
+
+<!-- ══ 导航栏 ══ -->
+<view class="nav-bar">
+  <view class="nav-back" bind:tap="onNavigateBack">
+    <text class="nav-back-icon">‹</text>
+  </view>
+  <text class="nav-title">我的情绪报告</text>
+  <view class="nav-share" bind:tap="onShare">
+    <text class="nav-share-icon">📤</text>
+  </view>
 </view>
+
+<!-- ══ 时间维度 Tab ══ -->
+<view class="tab-row">
+  <view
+    class="tab-item {{activeTab === 'week' ? 'tab-active' : ''}}"
+    bind:tap="onTabChange"
+    data-tab="week"
+  >
+    <text>本周</text>
+  </view>
+  <view
+    class="tab-item {{activeTab === 'month' ? 'tab-active' : ''}}"
+    bind:tap="onTabChange"
+    data-tab="month"
+  >
+    <text>本月</text>
+  </view>
+  <view
+    class="tab-item {{activeTab === 'year' ? 'tab-active' : ''}}"
+    bind:tap="onTabChange"
+    data-tab="year"
+  >
+    <text>本年</text>
+  </view>
+</view>
+
+<!-- ══ 情绪饼图（免费）══ -->
+<view class="report-card">
+  <text class="card-title">
+    {{activeTab === 'week' ? '本周' : activeTab === 'month' ? '本月' : '本年'}}情绪分布
+  </text>
+
+  <!-- 有数据 -->
+  <block wx:if="{{!pieEmpty}}">
+    <view class="pie-list">
+      <view
+        wx:for="{{pieData}}"
+        wx:key="label"
+        class="pie-row"
+      >
+        <text class="pie-emoji">{{item.emoji}}</text>
+        <text class="pie-label">{{item.label}}</text>
+        <!-- 进度条 -->
+        <view class="pie-bar-wrap">
+          <view
+            class="pie-bar-fill"
+            style="width: {{item.percent}}%; background-color: {{item.color}};"
+          />
+        </view>
+        <text class="pie-percent">{{item.percent}}%</text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 无数据 -->
+  <view wx:else class="empty-box">
+    <text class="empty-emoji">📭</text>
+    <text class="empty-text">这段时间还没有打卡记录</text>
+  </view>
+</view>
+
+<!-- ══ 情绪趋势折线图（💎 会员）══ -->
+<view class="report-card">
+  <view class="card-title-row">
+    <text class="card-title">情绪趋势</text>
+    <text wx:if="{{!isMember}}" class="vip-badge">💎 会员</text>
+  </view>
+
+  <view wx:if="{{isMember}}" class="coming-soon-box">
+    <text class="coming-soon-text">📈 趋势图即将上线</text>
+  </view>
+  <view wx:else class="locked-box" bind:tap="onShare">
+    <text class="locked-emoji">🔒</text>
+    <text class="locked-text">升级会员解锁情绪趋势图</text>
+  </view>
+</view>
+
+<!-- ══ 情绪年历 Year in Pixels（💎 会员，仅本年Tab）══ -->
+<view wx:if="{{activeTab === 'year'}}" class="report-card">
+  <view class="card-title-row">
+    <text class="card-title">情绪年历</text>
+    <text wx:if="{{!isMember}}" class="vip-badge">💎 会员</text>
+  </view>
+
+  <!-- 会员：显示年历 -->
+  <block wx:if="{{isMember}}">
+    <view class="year-pixels">
+      <view
+        wx:for="{{yearPixels}}"
+        wx:key="label"
+        class="pixel-month-row"
+      >
+        <text class="pixel-month-label">{{item.label}}</text>
+        <view class="pixel-days">
+          <view
+            wx:for="{{item.days}}"
+            wx:for-item="day"
+            wx:key="date"
+            class="pixel-day {{day.hasEntry ? 'pixel-filled' : 'pixel-empty'}}"
+            style="{{day.hasEntry ? 'background-color:' + day.color + ';' : ''}}"
+          />
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 非会员：锁定 -->
+  <view wx:else class="locked-box">
+    <text class="locked-emoji">🔒</text>
+    <text class="locked-text">升级会员解锁情绪年历</text>
+  </view>
+</view>
+
+<!-- ══ 生成分享图片 ══ -->
+<view class="share-btn-wrap">
+  <view
+    class="share-btn {{isMember ? '' : 'share-btn-locked'}}"
+    bind:tap="onShare"
+  >
+    <text class="share-btn-icon">📤</text>
+    <text class="share-btn-text">生成分享图片</text>
+    <text wx:if="{{!isMember}}" class="share-vip-tag">💎</text>
+  </view>
+</view>
+
+<view class="bottom-spacer" />
+
+</scroll-view>

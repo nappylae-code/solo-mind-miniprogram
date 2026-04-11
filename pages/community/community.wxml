@@ -1,7 +1,143 @@
-<view class="container">
-  <view class="placeholder">
-    <text class="emoji">👥</text>
-    <text class="title">社区功能</text>
-    <text class="description">此功能正在开发中...</text>
+<!-- pages/community/community.wxml -->
+<view class="page-wrap">
+
+<!-- ══ 导航栏 ══ -->
+<view class="nav-bar">
+  <text class="nav-title">情绪广场</text>
+</view>
+
+<!-- ══ 今日活跃 ══ -->
+<view class="active-banner">
+  <text class="active-dot">●</text>
+  <text class="active-text">今天，有 <text class="active-count">{{todayCount}}</text> 人在记录心情</text>
+</view>
+
+<!-- ══ 情绪筛选 ══ -->
+<scroll-view class="filter-scroll" scroll-x>
+  <view class="filter-row">
+    <view
+      wx:for="{{moodFilters}}"
+      wx:key="key"
+      class="filter-chip {{activeMoodFilter === item.key ? 'filter-chip-active' : ''}}"
+      bind:tap="onMoodFilterTap"
+      data-key="{{item.key}}"
+    >
+      <text>{{item.label}}</text>
+    </view>
   </view>
+</scroll-view>
+
+<!-- ══ 帖子列表 ══ -->
+<scroll-view
+  class="post-list"
+  scroll-y
+  refresher-enabled
+  bind:refresherrefresh="onPullDownRefresh"
+>
+
+  <!-- 空状态 -->
+  <view wx:if="{{ready && listEmpty}}" class="empty-wrap">
+    <text class="empty-emoji">🌱</text>
+    <text class="empty-text">还没有人分享，来做第一个吧</text>
+  </view>
+
+  <!-- 帖子卡片 -->
+  <view
+    wx:for="{{posts}}"
+    wx:key="_id"
+    class="post-card"
+  >
+    <!-- 卡片头部 -->
+    <view class="post-header">
+      <text class="post-mood-emoji">{{item.moodEmoji}}</text>
+      <text class="post-author">匿名用户</text>
+      <text class="post-time">{{item.timeAgoStr}}</text>
+    </view>
+
+    <!-- 内容 -->
+    <text class="post-content">{{item.content}}</text>
+
+    <!-- 回应按钮 -->
+    <view class="reaction-row">
+      <view
+        wx:for="{{item.reactionList}}"
+        wx:for-item="reaction"
+        wx:key="key"
+        class="reaction-btn {{reactedMap[item._id] === reaction.key ? 'reaction-btn-active' : ''}}"
+        bind:tap="onReact"
+        data-postid="{{item._id}}"
+        data-reactionkey="{{reaction.key}}"
+      >
+        <text class="reaction-emoji">{{reaction.emoji}}</text>
+        <text class="reaction-count">{{reaction.count}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 列表底部留白（避免被 FAB 遮挡）-->
+  <view class="list-bottom-spacer" />
+
+</scroll-view>
+
+<!-- ══ 悬浮发布按钮 FAB ══ -->
+<view class="fab" bind:tap="onOpenPublish">
+  <text class="fab-icon">💬</text>
+</view>
+
+<!-- ══ 发布弹窗 ══ -->
+<view
+  wx:if="{{showPublishModal}}"
+  class="modal-mask"
+  bind:tap="onClosePublish"
+/>
+<view class="modal-sheet {{showPublishModal ? 'modal-sheet-show' : ''}}">
+
+  <!-- 弹窗头部 -->
+  <view class="modal-header">
+    <text class="modal-title">分享今天的心情</text>
+    <view
+      class="modal-publish-btn {{publishSelectedMood && publishContent ? '' : 'modal-publish-btn-disabled'}}"
+      bind:tap="onPublish"
+    >
+      <text class="modal-publish-text">发布</text>
+    </view>
+  </view>
+
+  <!-- 情绪选择 -->
+  <view class="modal-section-label">我现在的心情：</view>
+  <view class="modal-mood-row">
+    <view
+      wx:for="{{publishMoods}}"
+      wx:key="key"
+      class="modal-mood-item {{publishSelectedMood === item.key ? 'modal-mood-active' : ''}}"
+      bind:tap="onSelectPublishMood"
+      data-key="{{item.key}}"
+    >
+      <text class="modal-mood-emoji">{{item.emoji}}</text>
+    </view>
+  </view>
+
+  <!-- 文字输入 -->
+  <textarea
+    class="modal-textarea"
+    placeholder="说点什么吧...（最多50字）"
+    placeholder-class="modal-textarea-placeholder"
+    maxlength="50"
+    value="{{publishContent}}"
+    bindinput="onPublishInput"
+    auto-height
+    show-confirm-bar="{{false}}"
+  />
+  <view class="modal-char-count">
+    <text>{{publishContentLength}}/50</text>
+  </view>
+
+  <!-- 匿名提示 -->
+  <view class="modal-anon-row">
+    <text class="modal-anon-icon">✅</text>
+    <text class="modal-anon-text">匿名发布（默认开启）</text>
+  </view>
+
+</view>
+
 </view>

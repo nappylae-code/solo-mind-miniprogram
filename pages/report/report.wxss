@@ -1,3 +1,299 @@
+/* pages/report/report.wxss */
+
 .container {
+  background-color: #F7F3EF;
+  min-height: 100vh;
+}
+
+/* ── 导航栏 ── */
+.nav-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 56rpx 32rpx 24rpx;
+  background-color: #F7F3EF;
+}
+
+.nav-back {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-back-icon {
+  font-size: 52rpx;
+  color: #4CAF50;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #212121;
+}
+
+.nav-share {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-share-icon {
+  font-size: 36rpx;
+}
+
+/* ── 时间 Tab ── */
+.tab-row {
+  display: flex;
+  flex-direction: row;
+  margin: 8rpx 32rpx 24rpx;
+  background-color: #EEEBE6;
+  border-radius: 16rpx;
+  padding: 6rpx;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx 0;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #757575;
+  transition: all 0.2s;
+}
+
+.tab-active {
+  background-color: #FFFFFF;
+  color: #4CAF50;
+  font-weight: 600;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+}
+
+/* ── 报告卡片 ── */
+.report-card {
+  background-color: #FFFFFF;
+  margin: 0 32rpx 24rpx;
+  border-radius: 20rpx;
+  padding: 36rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.card-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #212121;
+  margin-bottom: 28rpx;
+  display: block;
+}
+
+.card-title-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 28rpx;
+}
+
+.card-title-row .card-title {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.vip-badge {
+  font-size: 22rpx;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #388E3C, #4CAF50);
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+/* ── 饼图（条形式）── */
+.pie-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.pie-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.pie-emoji {
+  font-size: 32rpx;
+  width: 44rpx;
+  text-align: center;
+}
+
+.pie-label {
+  font-size: 26rpx;
+  color: #555555;
+  width: 72rpx;
+}
+
+.pie-bar-wrap {
+  flex: 1;
+  height: 20rpx;
+  background-color: #F0F0F0;
+  border-radius: 10rpx;
+  overflow: hidden;
+}
+
+.pie-bar-fill {
+  height: 20rpx;
+  border-radius: 10rpx;
+  min-width: 4rpx;
+}
+
+.pie-percent {
+  font-size: 24rpx;
+  color: #9E9E9E;
+  width: 60rpx;
+  text-align: right;
+}
+
+/* ── 空状态 ── */
+.empty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx 0;
+}
+
+.empty-emoji {
+  font-size: 72rpx;
+  margin-bottom: 16rpx;
+}
+
+.empty-text {
+  font-size: 26rpx;
+  color: #BDBDBD;
+}
+
+/* ── 锁定状态 ── */
+.locked-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx 0;
+  background-color: #FAFAFA;
+  border-radius: 12rpx;
+}
+
+.locked-emoji {
+  font-size: 56rpx;
+  margin-bottom: 16rpx;
+}
+
+.locked-text {
+  font-size: 26rpx;
+  color: #BDBDBD;
+}
+
+/* ── 即将上线 ── */
+.coming-soon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 0;
+  background-color: #F9FBE7;
+  border-radius: 12rpx;
+}
+
+.coming-soon-text {
+  font-size: 28rpx;
+  color: #8BC34A;
+}
+
+/* ── 年历 Year in Pixels ── */
+.year-pixels {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.pixel-month-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.pixel-month-label {
+  font-size: 22rpx;
+  color: #9E9E9E;
+  width: 56rpx;
+  flex-shrink: 0;
+}
+
+.pixel-days {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4rpx;
+  flex: 1;
+}
+
+.pixel-day {
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 4rpx;
+}
+
+.pixel-empty {
+  background-color: #EEEEEE;
+}
+
+.pixel-filled {
+  opacity: 0.85;
+}
+
+/* ── 分享按钮 ── */
+.share-btn-wrap {
+  padding: 0 32rpx 16rpx;
+}
+
+.share-btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  background-color: #4CAF50;
+  border-radius: 16rpx;
   padding: 32rpx;
+  gap: 12rpx;
+}
+
+.share-btn:active {
+  opacity: 0.8;
+}
+
+.share-btn-locked {
+  background-color: #BDBDBD;
+}
+
+.share-btn-icon {
+  font-size: 32rpx;
+}
+
+.share-btn-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.share-vip-tag {
+  font-size: 28rpx;
+}
+
+/* ── 底部留白 ── */
+.bottom-spacer {
+  height: 40rpx;
 }

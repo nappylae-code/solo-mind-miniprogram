@@ -1,4 +1,7 @@
 {
-  "navigationBarTitleText": "社区",
+  "navigationBarTitleText": "情绪广场",
+  "navigationStyle": "custom",
+  "enablePullDownRefresh": false,
+  "backgroundColor": "#F7F3EF",
   "usingComponents": {}
 }

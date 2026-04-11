@@ -317,3 +317,149 @@ export async function deleteDiaryFromCloud(
   }
 }
 
+// ============================================
+// COMMUNITY — 广场相关
+// content 字段加密存储，与 moodEntries/diaryEntries 保持一致
+// ============================================
+const COMMUNITY_COLLECTION = 'communityPosts';
+
+// 云端存储结构（content 加密，对后台不可读）
+export interface CommunityPost {
+  _id?: string;
+  userId: string;             // hash 后的匿名 ID
+  moodKey: string;            // 明文（枚举值，无隐私）
+  encryptedContent: string;   // ✅ 加密存储
+  timestamp: number;
+  date: string;               // YYYY-MM-DD
+  reactions: {
+    candle: number;           // 🕯️ 我懂
+    hug: number;              // 🤗 加油
+    sparkle: number;          // ✨ 真棒
+  };
+}
+
+// 页面展示用（解密后）
+export interface CommunityPostDecrypted extends Omit<CommunityPost, 'encryptedContent'> {
+  content: string;            // ✅ 解密后的明文，仅在内存中使用
+}
+
+// ── 发布匿名帖子（加密 content 后存入云端）──
+export async function publishCommunityPost(
+  userId: string,
+  moodKey: string,
+  content: string,
+  date: string
+): Promise<boolean> {
+  try {
+    const db = wx.cloud.database();
+
+    // ✅ 加密 content，云端只存 encryptedContent
+    const encryptedContent = encryptField(content);
+
+    await db.collection(COMMUNITY_COLLECTION).add({
+      data: {
+        userId,
+        moodKey,
+        encryptedContent,     // ✅ 加密字段
+        timestamp: Date.now(),
+        date,
+        reactions: { candle: 0, hug: 0, sparkle: 0 },
+      },
+    });
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+// ── 加载帖子列表（读取后解密 content）──
+export async function loadCommunityPosts(
+  moodKey?: string
+): Promise<CommunityPostDecrypted[]> {
+  try {
+    const db = wx.cloud.database();
+    const collection = db.collection(COMMUNITY_COLLECTION);
+
+    const query = moodKey
+      ? collection.where({ moodKey })
+      : collection;
+
+    const { data } = await query
+      .orderBy('timestamp', 'desc')
+      .limit(50)
+      .get();
+
+    if (!data || data.length === 0) return [];
+
+    // ✅ 逐条解密 encryptedContent
+    const results: CommunityPostDecrypted[] = [];
+    for (const item of data) {
+      let content = '';
+      if (item.encryptedContent) {
+        content = decryptField(item.encryptedContent) ?? '';
+      } else if (item.content) {
+        // 兼容旧明文数据（迁移期）
+        content = item.content;
+      }
+
+      // 解密失败的帖子跳过，不展示
+      if (!content) continue;
+
+      results.push({
+        _id:       item._id,
+        userId:    item.userId,
+        moodKey:   item.moodKey,
+        content,                    // ✅ 解密后明文，仅在内存中
+        timestamp: item.timestamp,
+        date:      item.date,
+        reactions: item.reactions ?? { candle: 0, hug: 0, sparkle: 0 },
+      });
+    }
+    return results;
+  } catch (error) {
+    return [];
+  }
+}
+
+// ── 今日活跃人数 ──
+export async function loadTodayActiveCount(): Promise<number> {
+  try {
+    const db = wx.cloud.database();
+    const now = new Date();
+    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const { total } = await db
+      .collection(COMMUNITY_COLLECTION)
+      .where({ date: todayKey })
+      .count();
+    return total ?? 0;
+  } catch (error) {
+    return 0;
+  }
+}
+
+// ── 预设回应（原子 +1，不涉及内容字段）──
+export async function reactToPost(
+  postId: string,
+  reactionKey: 'candle' | 'hug' | 'sparkle'
+): Promise<boolean> {
+  try {
+    const db = wx.cloud.database();
+    const fieldMap = {
+      candle:  'reactions.candle',
+      hug:     'reactions.hug',
+      sparkle: 'reactions.sparkle',
+    };
+    await db
+      .collection(COMMUNITY_COLLECTION)
+      .doc(postId)
+      .update({
+        data: {
+          [fieldMap[reactionKey]]: db.command.inc(1),
+        },
+      });
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
