@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "我的情绪报告",
-  "navigationBarBackgroundColor": "#FFFFFF",
-  "navigationBarTextStyle": "black"
+  "navigationBarTitleText": "情绪报告",
+  "navigationStyle": "custom",
+  "backgroundColor": "#F7F3EF"
 }
