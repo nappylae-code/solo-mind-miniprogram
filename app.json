@@ -10,7 +10,7 @@
     "pages/report/report"
   ],
   "window": {
-    "navigationBarTitleText": "SoloMind",
+    "navigationBarTitleText": "Nearmi",
     "navigationBarBackgroundColor": "#FFFFFF",
     "navigationBarTextStyle": "black",
     "backgroundColor": "#F7F3EF",

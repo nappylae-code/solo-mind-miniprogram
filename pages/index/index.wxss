@@ -107,3 +107,10 @@
   background-color: #A5D6A7 !important;
   color: #FFFFFF !important;
 }
+
+.app-logo {
+  width: 144rpx;
+  height: 144rpx;
+  border-radius: 32rpx;
+  margin-bottom: 32rpx;
+}
