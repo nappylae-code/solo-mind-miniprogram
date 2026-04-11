@@ -195,47 +195,8 @@ Page({
     this.setData({ publishContent: val, publishContentLength: val.length });
   },
 
-  async onPublish() {
-    const { publishSelectedMood, publishContent, userId, publishing } = this.data;
-
-    if (publishing) return;
-
-    if (!publishSelectedMood) {
-      wx.showToast({ title: '请先选择心情', icon: 'none' });
-      return;
-    }
-    if (!publishContent.trim()) {
-      wx.showToast({ title: '说点什么吧', icon: 'none' });
-      return;
-    }
-
-    this.setData({ publishing: true });
-    wx.showLoading({ title: '发布中...' });
-
-    const post: Omit<CommunityPost, '_id'> = {
-      userId,           // 已经是 hash 值，不含真实身份
-      moodKey: publishSelectedMood,
-      content: publishContent.trim(),
-      timestamp: Date.now(),
-      date: getTodayKey(),
-      reactions: { candle: 0, hug: 0, sparkle: 0 },
-    };
-
-    wx.hideLoading();
-    this.setData({ publishing: false });
-
-    if (ok) {
-      this.setData({ showPublishModal: false });
-      wx.showToast({ title: '已匿名发布 🌿', icon: 'none', duration: 1800 });
-      // 刷新列表
-      await this.loadAll();
-    } else {
-      wx.showToast({ title: '发布失败，请重试', icon: 'none' });
-    }
-  },
-
   // ============================================
-  // 预设回应
+  //  ── 发布弹窗 ──
   // ============================================
   async onPublish() {
     const { publishSelectedMood, publishContent, userId, publishing } = this.data;
