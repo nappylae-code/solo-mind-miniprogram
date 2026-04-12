@@ -4,7 +4,7 @@
     <!-- Logo -->
     <image
       class="app-logo"
-      src="/images/nearmi-logo.png"
+      src="/images/nearmi_logo.png"
       mode="aspectFit"
     />
 
