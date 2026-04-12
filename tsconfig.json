@@ -6,15 +6,17 @@
     "allowJs": true,
     "outDir": ".tmp",
     "rootDir": "./",
-    "strict": true,
+    "strict": true,                                                                          
+    "noImplicitAny": true,                                                                                           
+    "noUnusedLocals": true,                                                                                          
+    "noUnusedParameters": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "moduleResolution": "node",
     "types": [],
     "noEmit": false,
     "isolatedModules": false,
-    "resolveJsonModule": true,
-    "ignoreDeprecations": "6.0"
+    "resolveJsonModule": true
   },
   "include": [
     "**/*.ts",

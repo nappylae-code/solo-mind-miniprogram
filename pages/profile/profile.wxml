@@ -23,7 +23,7 @@
     </view>
   </view>
   <text class="user-name">{{userNickname || '独居者'}}</text>
-  <text class="join-days">加入 SoloMind 第 {{joinDays}} 天</text>
+  <text class="join-days">加入 Nearmi 第 {{joinDays}} 天</text>
 
   <!-- 数据概览 -->
   <view class="stats-row">
@@ -101,7 +101,7 @@
 
   <view class="menu-item tap-card" bind:tap="onAbout">
     <text class="menu-icon">❓</text>
-    <text class="menu-text">关于 SoloMind</text>
+    <text class="menu-text">关于 Nearmi</text>
     <text class="section-arrow">›</text>
   </view>
 
