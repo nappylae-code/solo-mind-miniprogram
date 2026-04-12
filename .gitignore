@@ -41,4 +41,7 @@ project.private.config.json
 # ============================================
 config.ts
 
+# WeChat DevTools config with real appid (local only)
+project.config.json
+
 
