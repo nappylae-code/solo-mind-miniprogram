@@ -1,5 +1,5 @@
 {
-  "name": "solo-mind-miniprogram",
+  "name": "nearmi-miniprogram",
   "version": "1.0.0",
   "description": "Nearmi WeChat Mini Program",
   "main": "miniprogram_npm/dist/index",
