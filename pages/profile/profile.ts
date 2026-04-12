@@ -253,7 +253,7 @@ Page({
       },
     });
   },
-});
+  
   onEditAvatar() {
     wx.chooseMedia({
       count: 1,
