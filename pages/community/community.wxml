@@ -1,10 +1,4 @@
-<!-- pages/community/community.wxml -->
 <view class="page-wrap">
-
-<!-- ══ 导航栏 ══ -->
-<view class="nav-bar">
-  <text class="nav-title">情绪广场</text>
-</view>
 
 <!-- ══ 今日活跃 ══ -->
 <view class="active-banner">
@@ -47,17 +41,12 @@
     wx:key="_id"
     class="post-card"
   >
-    <!-- 卡片头部 -->
     <view class="post-header">
       <text class="post-mood-emoji">{{item.moodEmoji}}</text>
       <text class="post-author">匿名用户</text>
       <text class="post-time">{{item.timeAgoStr}}</text>
     </view>
-
-    <!-- 内容 -->
     <text class="post-content">{{item.content}}</text>
-
-    <!-- 回应按钮 -->
     <view class="reaction-row">
       <view
         wx:for="{{item.reactionList}}"
@@ -74,7 +63,6 @@
     </view>
   </view>
 
-  <!-- 列表底部留白（避免被 FAB 遮挡）-->
   <view class="list-bottom-spacer" />
 
 </scroll-view>
@@ -84,15 +72,15 @@
   <text class="fab-icon">💬</text>
 </view>
 
-<!-- ══ 发布弹窗 ══ -->
+<!-- ══ 发布弹窗遮罩 ══ -->
 <view
   wx:if="{{showPublishModal}}"
   class="modal-mask"
   bind:tap="onClosePublish"
 />
-<view class="modal-sheet {{showPublishModal ? 'modal-sheet-show' : ''}}">
 
-  <!-- 弹窗头部 -->
+<!-- ══ 发布弹窗 ══ -->
+<view class="modal-sheet {{showPublishModal ? 'modal-sheet-show' : ''}}">
   <view class="modal-header">
     <text class="modal-title">分享今天的心情</text>
     <view
@@ -102,8 +90,6 @@
       <text class="modal-publish-text">发布</text>
     </view>
   </view>
-
-  <!-- 情绪选择 -->
   <view class="modal-section-label">我现在的心情：</view>
   <view class="modal-mood-row">
     <view
@@ -116,8 +102,6 @@
       <text class="modal-mood-emoji">{{item.emoji}}</text>
     </view>
   </view>
-
-  <!-- 文字输入 -->
   <textarea
     class="modal-textarea"
     placeholder="说点什么吧...（最多50字）"
@@ -131,13 +115,10 @@
   <view class="modal-char-count">
     <text>{{publishContentLength}}/50</text>
   </view>
-
-  <!-- 匿名提示 -->
   <view class="modal-anon-row">
     <text class="modal-anon-icon">✅</text>
     <text class="modal-anon-text">匿名发布（默认开启）</text>
   </view>
-
 </view>
 
 </view>

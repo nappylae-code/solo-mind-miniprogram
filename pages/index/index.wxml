@@ -1,6 +1,14 @@
 <view class="container">
   <view class="content">
-    <text class="title">欢迎使用 SoloMind</text>
+
+    <!-- Logo -->
+    <image
+      class="app-logo"
+      src="/images/nearmi_logo.png"
+      mode="aspectFit"
+    />
+
+    <text class="title">欢迎使用 Nearmi</text>
     <text class="subtitle">设置您的头像和昵称</text>
 
     <!-- Step 1: Choose Avatar -->
@@ -35,7 +43,7 @@
       bindtap="onConfirm"
       disabled="{{loading}}"
     >
-      {{loading ? '正在进入...' : '进入 SoloMind'}}
+      {{loading ? '正在进入...' : '进入 Nearmi'}}
     </button>
 
   </view>

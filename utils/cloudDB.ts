@@ -427,11 +427,11 @@ export async function loadTodayActiveCount(): Promise<number> {
     const db = wx.cloud.database();
     const now = new Date();
     const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const { total } = await db
+    const res = await db
       .collection(COMMUNITY_COLLECTION)
       .where({ date: todayKey })
       .count();
-    return total ?? 0;
+    return res.total ?? 0;
   } catch (error) {
     return 0;
   }
