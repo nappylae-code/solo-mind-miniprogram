@@ -109,7 +109,7 @@ Page({
       return;
     }
 
-    const userNickname  = wx.getStorageSync('userNickname')  || '独居者';
+    const userNickname  = wx.getStorageSync('userNickname')  || '匿名用户';
     const userAvatarUrl = wx.getStorageSync('userAvatarUrl') || '';
     const joinTimestamp = wx.getStorageSync('joinTimestamp') || Date.now();
 
@@ -159,7 +159,7 @@ Page({
   // ── 会员入口 ──
   goToMembership() {
     wx.showModal({
-      title: '💎 SoloMind 会员',
+      title: '💎 Nearmi 会员',
       content: '解锁情绪趋势图、年历、数据导出等全部高级功能。\n\n会员功能即将上线，敬请期待！',
       showCancel: false,
       confirmText: '知道了',
@@ -196,8 +196,8 @@ Page({
   // ── 关于 SoloMind ──
   onAbout() {
     wx.showModal({
-      title: '关于 SoloMind 🌿',
-      content: 'SoloMind 是一款写给独居者的情绪日记本。\n\n版本：1.0.0\n\n记录每一天的心情，看见真实的自己。',
+      title: '关于 Nearmi 🌿',
+      content: 'Nearmi 是一款心理健康情绪陪伴小程序。\n\n版本：1.0.0\n\n记录每一天的心情，看见真实的自己。',
       showCancel: false,
       confirmText: '知道了',
     });
@@ -207,7 +207,7 @@ Page({
   onFeedback() {
     wx.showModal({
       title: '📞 帮助与反馈',
-      content: '遇到问题或有建议？\n\n请通过微信搜索「SoloMind助手」联系我们，我们会尽快回复。',
+      content: '遇到问题或有建议？\n\n请通过微信搜索「Nearmi助手」联系我们，我们会尽快回复。',
       showCancel: false,
       confirmText: '知道了',
     });
