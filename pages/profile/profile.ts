@@ -193,7 +193,7 @@ Page({
     });
   },
 
-  // ── 关于 SoloMind ──
+  // ── 关于 Nearmi ──
   onAbout() {
     wx.showModal({
       title: '关于 Nearmi 🌿',
