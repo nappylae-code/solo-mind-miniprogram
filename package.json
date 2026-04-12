@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "description": "Nearmi WeChat Mini Program",
   "main": "miniprogram_npm/dist/index",
-  "scripts": {
-    "build:miniprogram": "echo 'Use WeChat DevTools: Tool -> Build npm'"
-  },
+  "scripts": {                                                                                                     
+      "build": "tsc",                                                                                              
+      "watch": "tsc -w",                                                                                           
+      "build:miniprogram": "echo 'Use WeChat DevTools: Tool -> Build npm'"                                         
+  }, 
   "dependencies": {
     "crypto-js": "^4.2.0"
   },
