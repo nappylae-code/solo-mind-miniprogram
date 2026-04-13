@@ -23,6 +23,8 @@ Page({
 
   onChooseAvatar(e: any) {
     const { avatarUrl } = e.detail;
+    // ✅ 用户取消时 avatarUrl 为空，直接忽略
+    if (!avatarUrl) return;
     this.setData({ avatarUrl });
   },
 
