@@ -10,11 +10,7 @@
 const config = {
   // 微信云开发环境 ID
   // 在微信开发者工具 → 云开发控制台 中查看
-  CLOUD_ENV_ID: 'YOUR_CLOUD_ENV_ID',
-
-  // AES 加密密钥
-  // 建议使用 32 位以上的随机字符串
-  AES_SECRET_KEY: 'YOUR_AES_SECRET_KEY',
+  CLOUD_ENV_ID: 'YOUR_CLOUD_ENV_ID'
 };
 
 export default config;

@@ -1,9 +1,8 @@
 import * as CryptoJS from 'crypto-js';
-import config from '../config';
 
 declare const wx: any;
 
-const FALLBACK_SECRET = config.AES_SECRET_KEY;
+const SALT = 'nearmi_2026';
 const OPEN_ID_STORAGE_KEY = 'openId';
 
 // ============================================
@@ -53,10 +52,10 @@ function getEncryptionKeyWordArray(): CryptoJS.lib.WordArray {
   try {
     const openId = getOpenId();
     if (openId && openId.length > 0) {
-      return CryptoJS.SHA256(openId + FALLBACK_SECRET);
+      return CryptoJS.SHA256(openId + SALT);
     }
   } catch (e) {}
-  return CryptoJS.SHA256(FALLBACK_SECRET);
+  return CryptoJS.SHA256(SALT);
 }
 
 // ============================================
@@ -189,7 +188,7 @@ export function decryptField(cipherText: string): string | null {
 // 加密后存本地，避免明文泄露
 // ============================================
 export function saveOpenId(openId: string): void {
-  const key = CryptoJS.SHA256(FALLBACK_SECRET);
+  const key = CryptoJS.SHA256(SALT);
   const ivBytes = getRandomBytes(16);
   const iv = uint8ArrayToWordArray(ivBytes);
 
@@ -208,7 +207,7 @@ export function getOpenId(): string | null {
     const value = wx.getStorageSync(OPEN_ID_STORAGE_KEY);
     if (!value) return null;
 
-    const key = CryptoJS.SHA256(FALLBACK_SECRET);
+    const key = CryptoJS.SHA256(SALT);
 
     let iv: CryptoJS.lib.WordArray;
     let cipher: string;
@@ -241,5 +240,5 @@ export function getOpenId(): string | null {
 // 云端只存哈希值，无法反推原始 openId
 // ============================================
 export function hashUserId(userId: string): string {
-  return CryptoJS.SHA256(userId + FALLBACK_SECRET).toString(CryptoJS.enc.Hex);
+  return CryptoJS.SHA256(userId + SALT).toString(CryptoJS.enc.Hex);
 }
