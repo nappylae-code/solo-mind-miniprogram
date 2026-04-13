@@ -242,3 +242,53 @@ export function getOpenId(): string | null {
 export function hashUserId(userId: string): string {
   return CryptoJS.SHA256(userId + SALT).toString(CryptoJS.enc.Hex);
 }
+
+// ============================================
+// ✅ 广场专用加密/解密
+// 使用固定 SALT 作为密钥，所有用户都能解密
+// 广场内容是公开分享的，不需要用户专属密钥
+// ============================================
+export function encryptPublicField(plainText: string): string {
+  const key = CryptoJS.SHA256(SALT);
+  const ivBytes = getRandomBytes(16);
+  const iv = uint8ArrayToWordArray(ivBytes);
+
+  const encrypted = CryptoJS.AES.encrypt(plainText, key, {
+    iv,
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7,
+  });
+
+  const ivHex = Array.from(ivBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  return ivHex + ':' + encrypted.toString();
+}
+
+export function decryptPublicField(cipherText: string): string | null {
+  try {
+    const key = CryptoJS.SHA256(SALT);
+
+    let iv: CryptoJS.lib.WordArray;
+    let cipher: string;
+
+    if (cipherText.includes(':')) {
+      const [ivHex, ct] = cipherText.split(':');
+      const ivBytes = new Uint8Array(ivHex.match(/.{2}/g)!.map(h => parseInt(h, 16)));
+      iv = uint8ArrayToWordArray(ivBytes);
+      cipher = ct;
+    } else {
+      iv = CryptoJS.lib.WordArray.create(new Array(4).fill(0), 16);
+      cipher = cipherText;
+    }
+
+    const bytes = CryptoJS.AES.decrypt(cipher, key, {
+      iv,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    });
+
+    return bytes.toString(CryptoJS.enc.Utf8) || null;
+  } catch {
+    return null;
+  }
+}
+

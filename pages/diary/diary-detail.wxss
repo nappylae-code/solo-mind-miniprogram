@@ -67,10 +67,13 @@
   padding: 24rpx 32rpx;
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
   border-top: 1rpx solid #F0F0F0;
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
 }
 
 .edit-btn {
-  width: 100%;
+  flex: 1;
   background-color: #4CAF50;
   color: #FFFFFF;
   font-size: 30rpx;
@@ -81,5 +84,21 @@
 }
 
 .edit-btn::after {
+  border: none;
+}
+
+/* ✅ 新增：删除按钮 */
+.delete-btn {
+  flex: 1;
+  background-color: #FFFFFF;
+  color: #F44336;
+  font-size: 30rpx;
+  font-weight: 600;
+  border-radius: 16rpx;
+  padding: 20rpx 0;
+  border: 2rpx solid #F44336;
+}
+
+.delete-btn::after {
   border: none;
 }

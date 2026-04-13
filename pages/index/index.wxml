@@ -11,33 +11,39 @@
     <text class="title">欢迎使用 Nearmi</text>
     <text class="subtitle">设置您的头像和昵称</text>
 
-    <!-- Step 1: Choose Avatar -->
-    <button
-      class="avatar-btn"
-      open-type="chooseAvatar"
-      bind:chooseavatar="onChooseAvatar"
-    >
-      <image
-        class="avatar-preview"
-        src="{{avatarUrl || '/images/profile.png'}}"
-        mode="aspectFill"
-      />
-      <text class="avatar-hint">点击选择头像</text>
-    </button>
+    <!-- 头像 + 昵称 并排 -->
+    <view class="profile-row">
 
-    <!-- Step 2: Enter Nickname -->
-    <view class="nickname-wrap">
-      <input
-        class="nickname-input"
-        type="nickname"
-        placeholder="点击填写昵称"
-        value="{{nickname}}"
-        bindinput="onNicknameInput"
-        bindblur="onNicknameBlur"
-      />
+      <!-- 左：头像按钮 -->
+      <button
+        class="avatar-btn"
+        open-type="chooseAvatar"
+        bind:chooseavatar="onChooseAvatar"
+      >
+        <image
+          class="avatar-preview"
+          src="{{avatarUrl || '/images/profile.png'}}"
+          mode="aspectFill"
+        />
+        <text class="avatar-hint">{{avatarUrl ? '换头像' : '点击头像'}}</text>
+      </button>
+
+      <!-- 右：昵称输入框 -->
+      <view class="nickname-wrap">
+        <input
+          class="nickname-input"
+          type="nickname"
+          placeholder="点击填写昵称"
+          value="{{nickname}}"
+          bindinput="onNicknameInput"
+          bindblur="onNicknameBlur"
+        />
+        <text class="nickname-hint">微信昵称</text>
+      </view>
+
     </view>
 
-    <!-- Step 3: Confirm -->
+    <!-- 进入按钮 -->
     <button
       class="btn-primary {{loading ? 'btn-disabled' : ''}}"
       bindtap="onConfirm"
