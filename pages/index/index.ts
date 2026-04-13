@@ -1,4 +1,4 @@
-import { saveOpenId } from '../../utils/encryption';
+import { saveOpenId, getOpenId } from '../../utils/encryption';
 
 declare const wx: any;
 
@@ -11,7 +11,9 @@ Page({
 
   onShow() {
     try {
-      const openId = wx.getStorageSync('openId');
+      // ✅ 用 getOpenId() 解密验证，而不是直接读取原始 Storage
+      // 避免把加密密文误判为"已登录"，也防止伪造
+      const openId = getOpenId();
       if (openId) {
         wx.switchTab({ url: '/pages/mood/mood' });
         return;
