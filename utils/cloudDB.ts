@@ -4,8 +4,7 @@
 // moodEntries: 情绪打卡（note 加密存储）
 // diaryEntries: 日记（content 加密存储）
 // ============================================
-
-import { encryptField, decryptField, hashUserId } from './encryption';
+import { encryptField, decryptField, hashUserId, encryptPublicField, decryptPublicField } from './encryption';
 
 declare const wx: any;
 
@@ -339,14 +338,14 @@ export async function publishCommunityPost(
 ): Promise<boolean> {
   try {
     const db = wx.cloud.database();
-    const encryptedContent = encryptField(content);
 
-    // ✅ 存哈希后的 userId
+    // ✅ 广场用固定密钥加密，所有用户都能解密
+    const encryptedContent = encryptPublicField(content);
     const hashedUserId = hashUserId(userId);
 
     await db.collection(COMMUNITY_COLLECTION).add({
       data: {
-        userId: hashedUserId,  // ✅ 存哈希值
+        userId: hashedUserId,
         moodKey,
         encryptedContent,
         timestamp: Date.now(),
@@ -356,7 +355,6 @@ export async function publishCommunityPost(
     });
 
     return true;
-
   } catch (error) {
     return false;
   }
@@ -369,10 +367,7 @@ export async function loadCommunityPosts(
   try {
     const db = wx.cloud.database();
     const collection = db.collection(COMMUNITY_COLLECTION);
-
-    const query = moodKey
-      ? collection.where({ moodKey })
-      : collection;
+    const query = moodKey ? collection.where({ moodKey }) : collection;
 
     const { data } = await query
       .orderBy('timestamp', 'desc')
@@ -381,30 +376,29 @@ export async function loadCommunityPosts(
 
     if (!data || data.length === 0) return [];
 
-    // ✅ 逐条解密 encryptedContent
     const results: CommunityPostDecrypted[] = [];
     for (const item of data) {
       let content = '';
       if (item.encryptedContent) {
-        content = decryptField(item.encryptedContent) ?? '';
+        // ✅ 用固定密钥解密，所有用户都能读取
+        content = decryptPublicField(item.encryptedContent) ?? '';
       } else if (item.content) {
-        // 兼容旧明文数据（迁移期）
-        content = item.content;
+        content = item.content; // 兼容旧明文数据
       }
 
-      // 解密失败的帖子跳过，不展示
       if (!content) continue;
 
       results.push({
         _id:       item._id,
         userId:    item.userId,
         moodKey:   item.moodKey,
-        content,                    // ✅ 解密后明文，仅在内存中
+        content,
         timestamp: item.timestamp,
         date:      item.date,
         reactions: item.reactions ?? { candle: 0, hug: 0, sparkle: 0 },
       });
     }
+
     return results;
   } catch (error) {
     return [];
@@ -427,29 +421,55 @@ export async function loadTodayActiveCount(): Promise<number> {
   }
 }
 
-// ── 预设回应（原子 +1，不涉及内容字段）──
+// ── 预设回应（通过云函数执行，绕过权限限制）──
 export async function reactToPost(
   postId: string,
   reactionKey: 'candle' | 'hug' | 'sparkle'
-): Promise<boolean> {
+): Promise<{ success: boolean; action?: 'added' | 'removed' }> {
+  try {
+    const result = await wx.cloud.callFunction({
+      name: 'reactToPost',
+      data: { postId, reactionKey },
+    });
+    const res = result.result as any;
+    return {
+      success: res.success === true,
+      action: res.action,
+    };
+  } catch (error) {
+    return { success: false };
+  }
+}
+
+// ── 加载当前用户的点击记录 ──
+export async function loadMyReactions(
+  openid: string
+): Promise<Record<string, Record<string, boolean>>> {
   try {
     const db = wx.cloud.database();
-    const fieldMap = {
-      candle:  'reactions.candle',
-      hug:     'reactions.hug',
-      sparkle: 'reactions.sparkle',
-    };
-    await db
-      .collection(COMMUNITY_COLLECTION)
-      .doc(postId)
-      .update({
-        data: {
-          [fieldMap[reactionKey]]: db.command.inc(1),
-        },
-      });
-    return true;
-  } catch (error) {
-    return false;
+    const hashedOpenid = hashUserId(openid);
+
+    // ⚠️ postReactions 存的是原始 openid（由云函数写入）
+    // 云函数用的是微信原生 OPENID，不是哈希值
+    // 所以这里直接用云函数来查询
+    const result = await wx.cloud.callFunction({
+      name: 'getMyReactions',
+    });
+
+    const reactions = (result.result as any).reactions as Array<{
+      postId: string;
+      reactionKey: string;
+    }>;
+
+    const reactedMap: Record<string, Record<string, boolean>> = {};
+    for (const r of reactions) {
+      if (!reactedMap[r.postId]) reactedMap[r.postId] = {};
+      reactedMap[r.postId][r.reactionKey] = true;
+    }
+
+    return reactedMap;
+  } catch {
+    return {};
   }
 }
 

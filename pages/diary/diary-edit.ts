@@ -88,6 +88,17 @@ Page({
       return;
     }
 
+    // ✅ 修复：心情为必填项，与 mood 页面保持一致
+    if (!selectedMoodKey) {
+      wx.showModal({
+        title: '提示',
+        content: '请先选择今天的心情',
+        showCancel: false,
+        confirmText: '确定',
+      });
+      return;
+    }
+
     const userId = getOpenId();
     if (!userId) return;
 

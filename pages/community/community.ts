@@ -4,14 +4,15 @@
 // ============================================
 
 import { getOpenId } from '../../utils/encryption';
+import { MOODS, getMoodByKey } from '../../constants/mood';
 import {
   CommunityPostDecrypted,
   publishCommunityPost,
   loadCommunityPosts,
   loadTodayActiveCount,
   reactToPost,
+  loadMyReactions,  // ✅ 新增
 } from '../../utils/cloudDB';
-import { MOODS, getMoodByKey } from '../../constants/mood';
 
 declare const wx: any;
 
@@ -97,6 +98,7 @@ Page({
     posts: [] as ReturnType<typeof decoratePost>[],
     listEmpty: false,
     loading: false,
+    refreshing: false,  // ✅ 新增：专门控制下拉刷新动画
 
     // 发布弹窗
     showPublishModal: false,
@@ -107,7 +109,7 @@ Page({
     publishing: false,
 
     // 已回应过的帖子（本地记录，防重复点击）
-    reactedMap: {} as Record<string, ReactionKey>,
+    reactedMap: {} as Record<string, Record<string, boolean>>,
   },
 
   onLoad() {},
@@ -127,29 +129,37 @@ Page({
     this.setData({ loading: true });
     wx.showLoading({ title: '加载中...' });
     try {
-      const [posts, count] = await Promise.all([
+      const [posts, count, reactedMap] = await Promise.all([
         loadCommunityPosts(this.data.activeMoodFilter || undefined),
         loadTodayActiveCount(),
+        loadMyReactions(this.data.userId),
       ]);
+  
       const decorated = posts.map(decoratePost);
+  
+      // ✅ loading: false 和数据更新放在同一个 setData 里
       this.setData({
+        loading: false,  // ✅ 先设为 false，让刷新动画停止
         posts: decorated,
         listEmpty: decorated.length === 0,
         todayCount: count,
+        reactedMap,
         ready: true,
       });
+  
     } catch (e) {
+      this.setData({ loading: false });  // ✅ 失败时也要停止
       wx.showToast({ title: '加载失败', icon: 'none' });
     } finally {
       wx.hideLoading();
-      this.setData({ loading: false });
     }
   },
 
   // ── 下拉刷新 ──
   async onPullDownRefresh() {
+    this.setData({ refreshing: true });
     await this.loadAll();
-    wx.stopPullDownRefresh();
+    this.setData({ refreshing: false });
   },
 
   // ── 情绪筛选切换 ──
@@ -233,4 +243,54 @@ Page({
       wx.showToast({ title: '发布失败，请重试', icon: 'none' });
     }
   },
+
+  // ============================================
+  // ✅ 修复：预设回应处理函数
+  // ============================================
+  async onReact(e: WechatMiniprogram.TouchEvent) {
+    const { postid, reactionkey } = e.currentTarget.dataset as {
+      postid: string;
+      reactionkey: ReactionKey;
+    };
+  
+    const { reactedMap, posts } = this.data;
+  
+    // ✅ 判断当前这个帖子的这个反应是否已点击
+    const isReacted = reactedMap[postid]?.[reactionkey] === true;
+  
+    // ✅ 乐观更新 UI
+    const updatedPosts = posts.map((post: any) => {
+      if (post._id !== postid) return post;
+      return {
+        ...post,
+        reactionList: post.reactionList.map((r: any) => {
+          if (r.key !== reactionkey) return r;
+          return { ...r, count: r.count + (isReacted ? -1 : 1) };
+        }),
+      };
+    });
+  
+    // ✅ 更新 reactedMap，每个反应独立记录
+    const updatedReactedMap = {
+      ...reactedMap,
+      [postid]: {
+        ...(reactedMap[postid] || {}),
+        [reactionkey]: !isReacted,  // toggle
+      },
+    };
+  
+    this.setData({
+      posts: updatedPosts,
+      reactedMap: updatedReactedMap,
+    });
+  
+    // 请求云端
+    const result = await reactToPost(postid, reactionkey);
+    if (!result.success) {
+      // 云端失败 → 回滚 UI
+      this.setData({ posts, reactedMap });
+      wx.showToast({ title: '操作失败，请重试', icon: 'none' });
+    }
+  },
+
 });
