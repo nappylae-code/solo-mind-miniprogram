@@ -156,6 +156,13 @@ Page({
     }
   },
 
+  // ── 下拉刷新 ──
+  async onPullDownRefresh() {
+    this.setData({ refreshing: true });
+    await this.loadAll();
+    this.setData({ refreshing: false });
+  },
+
   // ── 情绪筛选切换 ──
   async onMoodFilterTap(e: WechatMiniprogram.TouchEvent) {
     const key = (e.currentTarget.dataset as { key: string }).key;

@@ -26,7 +26,7 @@
   class="post-list"
   scroll-y
   refresher-enabled
-  refresher-triggered="{{loading}}"
+  refresher-triggered="{{refreshing}}"
   bind:refresherrefresh="onPullDownRefresh"
 >
 
