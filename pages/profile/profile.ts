@@ -4,7 +4,7 @@
 // ============================================
 
 import { isMember } from '../../constants/membership';
-import { getUserId } from '../../utils/encryption';
+import { getOpenId } from '../../utils/encryption';
 import { loadMoodFromCloud, loadDiaryFromCloud } from '../../utils/cloudDB';
 
 declare const wx: any;
@@ -103,7 +103,7 @@ Page({
   },
 
   async loadData() {
-    const userId = getUserId();
+    const userId = getOpenId();
     if (!userId) {
       wx.redirectTo({ url: '/pages/index/index' });
       return;

@@ -1,5 +1,5 @@
 import { loadDiaryFromCloud, deleteDiaryFromCloud } from '../../utils/cloudDB';
-import { getUserId } from '../../utils/encryption';
+import { getOpenId } from '../../utils/encryption';
 import { getMoodByKey } from '../../constants/mood';
 
 declare const wx: any;
@@ -33,7 +33,7 @@ Page({
   },
 
   async loadEntry(date: string) {
-    const userId = getUserId();
+    const userId = getOpenId();
     if (!userId) return;
 
     wx.showLoading({ title: '加载中...' });
@@ -80,7 +80,7 @@ Page({
       cancelText: '取消',
       success: async (res) => {
         if (!res.confirm) return;
-        const userId = getUserId();
+        const userId = getOpenId();
         if (!userId) return;
 
         wx.showLoading({ title: '删除中...' });
