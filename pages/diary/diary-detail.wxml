@@ -19,6 +19,7 @@
 
 <!-- 底部操作栏 -->
 <view class="action-bar">
+  <button class="delete-btn" bindtap="onDelete">🗑️ 删除</button>
   <button class="edit-btn" bindtap="onEdit">✏️ 编辑</button>
 </view>
 
