@@ -5,7 +5,7 @@
 // diaryEntries: 日记（content 加密存储）
 // ============================================
 
-import { encryptField, decryptField } from './encryption';
+import { encryptField, decryptField, hashUserId } from './encryption';
 
 declare const wx: any;
 
@@ -48,20 +48,17 @@ export async function saveMoodToCloud(
 ): Promise<boolean> {
   try {
     const db = wx.cloud.database();
+    const encryptedNote = entry.note ? encryptField(entry.note) : '';
 
-    // 加密 note
-    const encryptedNote = entry.note
-      ? encryptField(entry.note)
-      : '';
+    // ✅ 查询和存储都用哈希后的 userId
+    const hashedUserId = hashUserId(entry.userId);
 
-    // 检查是否已有当日记录
     const { data } = await db
       .collection(MOOD_COLLECTION)
-      .where({ userId: entry.userId, date: entry.date })
+      .where({ userId: hashedUserId, date: entry.date })
       .get();
 
     if (data && data.length > 0) {
-      // 更新：同时用 remove() 清除旧的明文 note 字段
       await db
         .collection(MOOD_COLLECTION)
         .doc(data[0]._id)
@@ -70,14 +67,13 @@ export async function saveMoodToCloud(
             moodKey: entry.moodKey,
             encryptedNote: encryptedNote,
             timestamp: entry.timestamp,
-            note: db.command.remove(), // 清除旧明文字段
+            note: db.command.remove(),
           },
         });
     } else {
-      // 新建：只存加密字段，不存 note 明文
       await db.collection(MOOD_COLLECTION).add({
         data: {
-          userId: entry.userId,
+          userId: hashedUserId,  // ✅ 存哈希值
           date: entry.date,
           moodKey: entry.moodKey,
           encryptedNote: encryptedNote,
@@ -86,7 +82,6 @@ export async function saveMoodToCloud(
       });
     }
 
-    // 更新本地缓存（缓存明文，仅本地使用）
     _updateMoodCache(entry);
     return true;
 
@@ -101,36 +96,30 @@ export async function saveMoodToCloud(
 // ============================================
 export async function loadMoodFromCloud(
   userId: string
-): Promise<Record<string, {
-  timestamp: number;
-  moodKey: string;
-  note?: string;
-}>> {
+): Promise<Record<string, { timestamp: number; moodKey: string; note?: string }>> {
   try {
     const db = wx.cloud.database();
+
+    // ✅ 查询用哈希后的 userId
+    const hashedUserId = hashUserId(userId);
+
     const { data } = await db
       .collection(MOOD_COLLECTION)
-      .where({ userId })
+      .where({ userId: hashedUserId })
       .orderBy('date', 'desc')
       .limit(100)
       .get();
 
-    const entries: Record<string, {
-      timestamp: number;
-      moodKey: string;
-      note?: string;
-    }> = {};
+    const entries: Record<string, { timestamp: number; moodKey: string; note?: string }> = {};
 
     if (data && data.length > 0) {
       for (const item of data) {
-        // 优先解密 encryptedNote，兼容旧明文 note
         let note = '';
         if (item.encryptedNote) {
           note = decryptField(item.encryptedNote) ?? '';
         } else if (item.note) {
-          note = item.note; // 旧数据向下兼容
+          note = item.note;
         }
-
         entries[item.date] = {
           timestamp: item.timestamp,
           moodKey: item.moodKey,
@@ -143,7 +132,6 @@ export async function loadMoodFromCloud(
     return entries;
 
   } catch (error) {
-    // 降级到本地缓存
     try {
       const cached = wx.getStorageSync(MOOD_CACHE_KEY);
       if (cached) return JSON.parse(cached);
@@ -161,16 +149,14 @@ export async function saveDiaryToCloud(
 ): Promise<boolean> {
   try {
     const db = wx.cloud.database();
+    const encryptedContent = entry.content ? encryptField(entry.content) : '';
 
-    // 加密 content
-    const encryptedContent = entry.content
-      ? encryptField(entry.content)
-      : '';
+    // ✅ 查询和存储都用哈希后的 userId
+    const hashedUserId = hashUserId(entry.userId);
 
-    // 检查是否已有当日记录
     const { data } = await db
       .collection(DIARY_COLLECTION)
-      .where({ userId: entry.userId, date: entry.date })
+      .where({ userId: hashedUserId, date: entry.date })
       .get();
 
     if (data && data.length > 0) {
@@ -187,7 +173,7 @@ export async function saveDiaryToCloud(
     } else {
       await db.collection(DIARY_COLLECTION).add({
         data: {
-          userId: entry.userId,
+          userId: hashedUserId,  // ✅ 存哈希值
           date: entry.date,
           encryptedContent: encryptedContent,
           moodKey: entry.moodKey || '',
@@ -196,7 +182,6 @@ export async function saveDiaryToCloud(
       });
     }
 
-    // 更新本地缓存
     _updateDiaryCache(entry);
     return true;
 
@@ -211,31 +196,27 @@ export async function saveDiaryToCloud(
 // ============================================
 export async function loadDiaryFromCloud(
   userId: string
-): Promise<Record<string, {
-  timestamp: number;
-  content?: string;
-  moodKey?: string;
-}>> {
+): Promise<Record<string, { timestamp: number; content?: string; moodKey?: string }>> {
   try {
     const db = wx.cloud.database();
+
+    // ✅ 查询用哈希后的 userId
+    const hashedUserId = hashUserId(userId);
+
     const { data } = await db
       .collection(DIARY_COLLECTION)
-      .where({ userId })
+      .where({ userId: hashedUserId })
       .orderBy('date', 'desc')
       .limit(100)
       .get();
 
-    const entries: Record<string, {
-      timestamp: number;
-      content?: string;
-    }> = {};
+    const entries: Record<string, { timestamp: number; content?: string; moodKey?: string }> = {};
 
     if (data && data.length > 0) {
       for (const item of data) {
         const content = item.encryptedContent
           ? decryptField(item.encryptedContent) ?? ''
           : '';
-
         entries[item.date] = {
           timestamp: item.timestamp,
           content: content || undefined,
@@ -294,15 +275,19 @@ export async function deleteDiaryFromCloud(
 ): Promise<boolean> {
   try {
     const db = wx.cloud.database();
+
+    // ✅ 查询用哈希后的 userId
+    const hashedUserId = hashUserId(userId);
+
     const { data } = await db
       .collection(DIARY_COLLECTION)
-      .where({ userId, date })
+      .where({ userId: hashedUserId, date })
       .get();
 
     if (data && data.length > 0) {
       await db.collection(DIARY_COLLECTION).doc(data[0]._id).remove();
     }
-    // 更新本地缓存
+
     try {
       const cached = wx.getStorageSync(DIARY_CACHE_KEY);
       if (cached) {
@@ -311,7 +296,9 @@ export async function deleteDiaryFromCloud(
         wx.setStorageSync(DIARY_CACHE_KEY, JSON.stringify(entries));
       }
     } catch {}
+
     return true;
+
   } catch (error) {
     return false;
   }
@@ -352,21 +339,24 @@ export async function publishCommunityPost(
 ): Promise<boolean> {
   try {
     const db = wx.cloud.database();
-
-    // ✅ 加密 content，云端只存 encryptedContent
     const encryptedContent = encryptField(content);
+
+    // ✅ 存哈希后的 userId
+    const hashedUserId = hashUserId(userId);
 
     await db.collection(COMMUNITY_COLLECTION).add({
       data: {
-        userId,
+        userId: hashedUserId,  // ✅ 存哈希值
         moodKey,
-        encryptedContent,     // ✅ 加密字段
+        encryptedContent,
         timestamp: Date.now(),
         date,
         reactions: { candle: 0, hug: 0, sparkle: 0 },
       },
     });
+
     return true;
+
   } catch (error) {
     return false;
   }

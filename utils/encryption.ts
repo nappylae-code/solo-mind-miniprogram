@@ -245,3 +245,13 @@ export function encryptField(plainText: string): string {
 export function decryptField(cipherText: string): string | null {
   return decryptData(cipherText);
 }
+
+// ============================================
+// ✅ 安全修复：对 userId 做哈希处理后再存入云端
+// SHA256(userId + secret) → 64位hex字符串
+// 云端只存哈希值，无法反推原始 userId
+// ============================================
+export function hashUserId(userId: string): string {
+  return CryptoJS.SHA256(userId + FALLBACK_SECRET).toString(CryptoJS.enc.Hex);
+}
+
