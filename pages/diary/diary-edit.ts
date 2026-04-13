@@ -1,5 +1,5 @@
 import { saveDiaryToCloud, loadDiaryFromCloud, CloudDiaryEntry } from '../../utils/cloudDB';
-import { getUserId } from '../../utils/encryption';
+import { getOpenId } from '../../utils/encryption';
 import { MOODS, getMoodByKey, MoodType } from '../../constants/mood';
 import { isMember, MEMBERSHIP } from '../../constants/membership';
 
@@ -37,7 +37,7 @@ Page({
   },
 
   async loadExistingEntry(date: string) {
-    const userId = getUserId();
+    const userId = getOpenId();
     if (!userId) return;
 
     try {
@@ -88,7 +88,7 @@ Page({
       return;
     }
 
-    const userId = getUserId();
+    const userId = getOpenId();
     if (!userId) return;
 
     this.setData({ saving: true });

@@ -5,6 +5,7 @@ declare const wx: any;
 
 const FALLBACK_SECRET = config.AES_SECRET_KEY;
 const USER_ID_STORAGE_KEY = 'userId';
+const OPEN_ID_STORAGE_KEY = 'openId';
 
 // ============================================
 // 问题2修复：用同步方式调用 wx.getRandomValues
@@ -47,19 +48,15 @@ CryptoJS.lib.WordArray.random = function (nBytes: number): CryptoJS.lib.WordArra
 };
 
 // ============================================
-// 问题1修复：返回真正的 256-bit WordArray
-// 而不是 hex 字符串，确保密钥强度
+// 加密密钥改用 openId 派生
 // ============================================
 function getEncryptionKeyWordArray(): CryptoJS.lib.WordArray {
   try {
-    const userId = wx.getStorageSync(USER_ID_STORAGE_KEY);
-    if (userId && userId.length > 0) {
-      // SHA256(userId + secret) → 256-bit WordArray
-      return CryptoJS.SHA256(userId + FALLBACK_SECRET);
+    const openId = getOpenId();
+    if (openId && openId.length > 0) {
+      return CryptoJS.SHA256(openId + FALLBACK_SECRET);
     }
-  } catch (e) {
-    // fallback
-  }
+  } catch (e) {}
   return CryptoJS.SHA256(FALLBACK_SECRET);
 }
 
@@ -174,50 +171,57 @@ export async function deleteSecureItem(key: string): Promise<void> {
 }
 
 // ============================================
-// Save userId（用固定 secret 派生的 key，避免鸡生蛋问题）
+// Encrypt a single field (for cloudDB use)
 // ============================================
-export function saveUserId(userId: string): void {
-  // userId 加密用固定 key（不能依赖 userId 本身）
-  const key = CryptoJS.SHA256(FALLBACK_SECRET); // ✅ WordArray
+export function encryptField(plainText: string): string {
+  return encryptData(plainText);
+}
+
+// ============================================
+// Decrypt a single field (for cloudDB use)
+// ============================================
+export function decryptField(cipherText: string): string | null {
+  return decryptData(cipherText);
+}
+
+// ============================================
+// ✅ 改用 openid 替代本地 UUID
+// openid 由微信云函数获取，与微信账号绑定
+// 加密后存本地，避免明文泄露
+// ============================================
+export function saveOpenId(openId: string): void {
+  const key = CryptoJS.SHA256(FALLBACK_SECRET);
   const ivBytes = getRandomBytes(16);
   const iv = uint8ArrayToWordArray(ivBytes);
 
-  const encrypted = CryptoJS.AES.encrypt(userId, key, {
+  const encrypted = CryptoJS.AES.encrypt(openId, key, {
     iv,
     mode: CryptoJS.mode.CBC,
     padding: CryptoJS.pad.Pkcs7,
   });
 
   const ivHex = Array.from(ivBytes).map(b => b.toString(16).padStart(2, '0')).join('');
-  wx.setStorageSync(USER_ID_STORAGE_KEY, ivHex + ':' + encrypted.toString());
+  wx.setStorageSync(OPEN_ID_STORAGE_KEY, ivHex + ':' + encrypted.toString());
 }
 
-// ============================================
-// Get and decrypt userId
-// ============================================
-export function getUserId(): string | null {
+export function getOpenId(): string | null {
   try {
-    const value = wx.getStorageSync(USER_ID_STORAGE_KEY);
+    const value = wx.getStorageSync(OPEN_ID_STORAGE_KEY);
     if (!value) return null;
 
-    const key = CryptoJS.SHA256(FALLBACK_SECRET); // ✅ WordArray
+    const key = CryptoJS.SHA256(FALLBACK_SECRET);
 
     let iv: CryptoJS.lib.WordArray;
     let cipher: string;
 
     if (value.includes(':')) {
-      // 新格式
       const [ivHex, ct] = value.split(':');
       const ivBytes = new Uint8Array(ivHex.match(/.{2}/g)!.map((h: string) => parseInt(h, 16)));
       iv = uint8ArrayToWordArray(ivBytes);
       cipher = ct;
-    } else if (isEncrypted(value)) {
-      // 旧格式兼容
+    } else {
       iv = CryptoJS.lib.WordArray.create(new Array(4).fill(0), 16);
       cipher = value;
-    } else {
-      // 明文旧数据
-      return value;
     }
 
     const bytes = CryptoJS.AES.decrypt(cipher, key, {
@@ -233,25 +237,10 @@ export function getUserId(): string | null {
 }
 
 // ============================================
-// Encrypt a single field (for cloudDB use)
-// ============================================
-export function encryptField(plainText: string): string {
-  return encryptData(plainText);
-}
-
-// ============================================
-// Decrypt a single field (for cloudDB use)
-// ============================================
-export function decryptField(cipherText: string): string | null {
-  return decryptData(cipherText);
-}
-
-// ============================================
-// ✅ 安全修复：对 userId 做哈希处理后再存入云端
-// SHA256(userId + secret) → 64位hex字符串
-// 云端只存哈希值，无法反推原始 userId
+// ✅ 安全修复：对 openId 做哈希处理后再存入云端
+// SHA256(openId + secret) → 64位hex字符串
+// 云端只存哈希值，无法反推原始 openId
 // ============================================
 export function hashUserId(userId: string): string {
   return CryptoJS.SHA256(userId + FALLBACK_SECRET).toString(CryptoJS.enc.Hex);
 }
-

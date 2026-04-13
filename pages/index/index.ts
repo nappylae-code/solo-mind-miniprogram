@@ -1,51 +1,22 @@
-import { saveUserId } from '../../utils/encryption';
+import { saveOpenId } from '../../utils/encryption';
 
 declare const wx: any;
-
-// ============================================
-// Generate a UUID v4 using wx.getRandomValues
-// Directly uses wx API — no polyfill dependency
-// ============================================
-function generateUUID(): string {
-  const array = new Uint8Array(16);
-
-  if (typeof wx !== 'undefined' && wx.getRandomValues) {
-    wx.getRandomValues(array);
-  } else {
-    throw new Error('wx.getRandomValues is not available. Secure random number generation failed.');
-  }
-
-  array[6] = (array[6] & 0x0f) | 0x40;
-  array[8] = (array[8] & 0x3f) | 0x80;
-
-  const hex = Array.from(array).map(b => b.toString(16).padStart(2, '0'));
-
-  return [
-    hex.slice(0, 4).join(''),
-    hex.slice(4, 6).join(''),
-    hex.slice(6, 8).join(''),
-    hex.slice(8, 10).join(''),
-    hex.slice(10, 16).join('')
-  ].join('-');
-}
 
 Page({
   data: {
     avatarUrl: '',
     nickname: '',
-    loading: false   // ✅ new: tracks saving state
+    loading: false,
   },
 
   onShow() {
     try {
-      const userId = wx.getStorageSync('userId');
-      if (userId) {
+      const openId = wx.getStorageSync('openId');
+      if (openId) {
         wx.switchTab({ url: '/pages/mood/mood' });
         return;
       }
-    } catch (error) {
-      // silently handle storage error
-    }
+    } catch (error) {}
   },
 
   onChooseAvatar(e: any) {
@@ -61,10 +32,9 @@ Page({
     this.setData({ nickname: e.detail.value });
   },
 
-  onConfirm() {
+  async onConfirm() {
     const { avatarUrl, nickname, loading } = this.data;
 
-    // ✅ Prevent double tap
     if (loading) return;
 
     if (!nickname || nickname.trim() === '') {
@@ -72,29 +42,33 @@ Page({
       return;
     }
 
-    // ✅ Show loading state
     this.setData({ loading: true });
     wx.showLoading({ title: '正在进入...' });
 
     try {
-      const userId = generateUUID();
+      // ✅ 通过云函数获取 openid
+      const result = await wx.cloud.callFunction({ name: 'getOpenId' });
+      const openId = result.result.openid;
 
-      saveUserId(userId);
+      if (!openId) {
+        throw new Error('获取 openid 失败');
+      }
+
+      // ✅ 加密存储 openId
+      saveOpenId(openId);
       wx.setStorageSync('userNickname', nickname.trim());
       wx.setStorageSync('userAvatarUrl', avatarUrl);
       wx.setStorageSync('isLoggedIn', true);
 
-      // ✅ Hide loading then navigate
       wx.hideLoading();
       wx.switchTab({ url: '/pages/mood/mood' });
 
     } catch (error) {
-      // ✅ Hide loading on error too
       wx.hideLoading();
       this.setData({ loading: false });
       wx.showModal({
         title: '错误',
-        content: '保存用户信息失败',
+        content: '登录失败，请检查网络后重试',
         showCancel: false,
         confirmText: '确定'
       });

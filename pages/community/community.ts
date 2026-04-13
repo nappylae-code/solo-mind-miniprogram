@@ -3,7 +3,7 @@
 // 广场页 — 匿名情绪广场
 // ============================================
 
-import { getUserId } from '../../utils/encryption';
+import { getOpenId } from '../../utils/encryption';
 import {
   CommunityPostDecrypted,
   publishCommunityPost,
@@ -113,7 +113,7 @@ Page({
   onLoad() {},
 
   onShow() {
-    const userId = getUserId();
+    const userId = getOpenId();
     if (!userId) {
       wx.redirectTo({ url: '/pages/index/index' });
       return;

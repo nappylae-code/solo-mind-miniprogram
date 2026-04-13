@@ -1,5 +1,5 @@
 import { loadDiaryFromCloud } from '../../utils/cloudDB';
-import { getUserId } from '../../utils/encryption';
+import { getOpenId } from '../../utils/encryption';
 import { getMoodByKey } from '../../constants/mood';
 
 declare const wx: any;
@@ -78,7 +78,7 @@ Page({
   },
 
   async loadData() {
-    const userId = getUserId();
+    const userId = getOpenId();
     if (!userId) {
       wx.redirectTo({ url: '/pages/index/index' });
       return;

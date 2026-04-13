@@ -1,6 +1,6 @@
 import { MOODS, getMoodByKey, MoodType } from '../../constants/mood';
 import { saveMoodToCloud, loadMoodFromCloud } from '../../utils/cloudDB';
-import { getUserId } from '../../utils/encryption';
+import { getOpenId } from '../../utils/encryption';
 import { isMember, MEMBERSHIP } from '../../constants/membership';
 
 declare const wx: any;
@@ -133,7 +133,7 @@ Page({
 
   async loadData() {
     try {
-      const userId = getUserId();
+      const userId = getOpenId();
       if (!userId) {
         this.setData({ ready: true });
         wx.redirectTo({ url: '/pages/index/index' });

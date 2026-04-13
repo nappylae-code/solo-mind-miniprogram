@@ -3,7 +3,7 @@
 // 情绪报告页
 // ============================================
 
-import { getUserId } from '../../utils/encryption';
+import { getOpenId } from '../../utils/encryption';
 import { loadMoodFromCloud } from '../../utils/cloudDB';
 import { getMoodByKey, MOODS, MoodType } from '../../constants/mood';
 import { isMember } from '../../constants/membership';
@@ -150,7 +150,7 @@ Page({
   },
 
   async loadData() {
-    const userId = getUserId();
+    const userId = getOpenId();
     if (!userId) {
       wx.navigateBack();
       return;
