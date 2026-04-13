@@ -148,8 +148,9 @@ Page({
 
   // ── 下拉刷新 ──
   async onPullDownRefresh() {
+    // ✅ 修复：scroll-view 的刷新通过 refresher-triggered="{{loading}}"
+    // 自动控制，不需要 wx.stopPullDownRefresh()
     await this.loadAll();
-    wx.stopPullDownRefresh();
   },
 
   // ── 情绪筛选切换 ──

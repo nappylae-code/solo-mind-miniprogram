@@ -421,27 +421,19 @@ export async function loadTodayActiveCount(): Promise<number> {
   }
 }
 
-// ── 预设回应（原子 +1，不涉及内容字段）──
+// ── 预设回应（通过云函数执行，绕过权限限制）──
 export async function reactToPost(
   postId: string,
   reactionKey: 'candle' | 'hug' | 'sparkle'
 ): Promise<boolean> {
   try {
-    const db = wx.cloud.database();
-    const fieldMap = {
-      candle:  'reactions.candle',
-      hug:     'reactions.hug',
-      sparkle: 'reactions.sparkle',
-    };
-    await db
-      .collection(COMMUNITY_COLLECTION)
-      .doc(postId)
-      .update({
-        data: {
-          [fieldMap[reactionKey]]: db.command.inc(1),
-        },
-      });
-    return true;
+    // ✅ 通过云函数更新，云函数有管理员权限
+    // 且云函数内部只允许更新 reactions 字段
+    const result = await wx.cloud.callFunction({
+      name: 'reactToPost',
+      data: { postId, reactionKey },
+    });
+    return (result.result as any).success === true;
   } catch (error) {
     return false;
   }
