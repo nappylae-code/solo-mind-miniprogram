@@ -441,5 +441,35 @@ export async function reactToPost(
   }
 }
 
+// ── 加载当前用户的点击记录 ──
+export async function loadMyReactions(
+  openid: string
+): Promise<Record<string, Record<string, boolean>>> {
+  try {
+    const db = wx.cloud.database();
+    const hashedOpenid = hashUserId(openid);
 
+    // ⚠️ postReactions 存的是原始 openid（由云函数写入）
+    // 云函数用的是微信原生 OPENID，不是哈希值
+    // 所以这里直接用云函数来查询
+    const result = await wx.cloud.callFunction({
+      name: 'getMyReactions',
+    });
+
+    const reactions = (result.result as any).reactions as Array<{
+      postId: string;
+      reactionKey: string;
+    }>;
+
+    const reactedMap: Record<string, Record<string, boolean>> = {};
+    for (const r of reactions) {
+      if (!reactedMap[r.postId]) reactedMap[r.postId] = {};
+      reactedMap[r.postId][r.reactionKey] = true;
+    }
+
+    return reactedMap;
+  } catch {
+    return {};
+  }
+}
 

@@ -4,14 +4,15 @@
 // ============================================
 
 import { getOpenId } from '../../utils/encryption';
+import { MOODS, getMoodByKey } from '../../constants/mood';
 import {
   CommunityPostDecrypted,
   publishCommunityPost,
   loadCommunityPosts,
   loadTodayActiveCount,
   reactToPost,
+  loadMyReactions,  // ✅ 新增
 } from '../../utils/cloudDB';
-import { MOODS, getMoodByKey } from '../../constants/mood';
 
 declare const wx: any;
 
@@ -127,15 +128,19 @@ Page({
     this.setData({ loading: true });
     wx.showLoading({ title: '加载中...' });
     try {
-      const [posts, count] = await Promise.all([
+      // ✅ 同时加载帖子、今日人数、当前用户的点击记录
+      const [posts, count, reactedMap] = await Promise.all([
         loadCommunityPosts(this.data.activeMoodFilter || undefined),
         loadTodayActiveCount(),
+        loadMyReactions(this.data.userId),
       ]);
+  
       const decorated = posts.map(decoratePost);
       this.setData({
         posts: decorated,
         listEmpty: decorated.length === 0,
         todayCount: count,
+        reactedMap,  // ✅ 用云端数据初始化，换设备也能同步
         ready: true,
       });
     } catch (e) {
@@ -144,13 +149,6 @@ Page({
       wx.hideLoading();
       this.setData({ loading: false });
     }
-  },
-
-  // ── 下拉刷新 ──
-  async onPullDownRefresh() {
-    // ✅ 修复：scroll-view 的刷新通过 refresher-triggered="{{loading}}"
-    // 自动控制，不需要 wx.stopPullDownRefresh()
-    await this.loadAll();
   },
 
   // ── 情绪筛选切换 ──
