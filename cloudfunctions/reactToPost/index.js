@@ -19,13 +19,18 @@ exports.main = async (event) => {
     sparkle: 'reactions.sparkle',
   };
 
-  // ✅ 检查是否已经点击过
+  // ✅ 查询时同时匹配 postId + openid + reactionKey
+  // 每个反应独立记录，互不影响
   const existing = await db.collection('postReactions')
-    .where({ postId, openid: OPENID })
+    .where({
+      postId,
+      openid: OPENID,
+      reactionKey,  // ✅ 加上这个条件
+    })
     .get();
 
   if (existing.data && existing.data.length > 0) {
-    // ✅ 已点击过 → 取消点击，-1
+    // 已点击过这个反应 → 取消，-1
     await db.collection('postReactions')
       .doc(existing.data[0]._id)
       .remove();
@@ -39,13 +44,14 @@ exports.main = async (event) => {
       });
 
     return { success: true, action: 'removed' };
+
   } else {
-    // ✅ 未点击过 → 新增点击，+1
+    // 未点击过这个反应 → 新增，+1
     await db.collection('postReactions').add({
       data: {
         postId,
         openid: OPENID,
-        reactionKey,
+        reactionKey,  // ✅ 记录具体是哪个反应
         timestamp: Date.now(),
       },
     });
