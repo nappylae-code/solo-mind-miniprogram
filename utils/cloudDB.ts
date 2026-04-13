@@ -4,8 +4,7 @@
 // moodEntries: 情绪打卡（note 加密存储）
 // diaryEntries: 日记（content 加密存储）
 // ============================================
-
-import { encryptField, decryptField, hashUserId } from './encryption';
+import { encryptField, decryptField, hashUserId, encryptPublicField, decryptPublicField } from './encryption';
 
 declare const wx: any;
 
@@ -339,14 +338,14 @@ export async function publishCommunityPost(
 ): Promise<boolean> {
   try {
     const db = wx.cloud.database();
-    const encryptedContent = encryptField(content);
 
-    // ✅ 存哈希后的 userId
+    // ✅ 广场用固定密钥加密，所有用户都能解密
+    const encryptedContent = encryptPublicField(content);
     const hashedUserId = hashUserId(userId);
 
     await db.collection(COMMUNITY_COLLECTION).add({
       data: {
-        userId: hashedUserId,  // ✅ 存哈希值
+        userId: hashedUserId,
         moodKey,
         encryptedContent,
         timestamp: Date.now(),
@@ -356,7 +355,6 @@ export async function publishCommunityPost(
     });
 
     return true;
-
   } catch (error) {
     return false;
   }
@@ -369,10 +367,7 @@ export async function loadCommunityPosts(
   try {
     const db = wx.cloud.database();
     const collection = db.collection(COMMUNITY_COLLECTION);
-
-    const query = moodKey
-      ? collection.where({ moodKey })
-      : collection;
+    const query = moodKey ? collection.where({ moodKey }) : collection;
 
     const { data } = await query
       .orderBy('timestamp', 'desc')
@@ -381,30 +376,29 @@ export async function loadCommunityPosts(
 
     if (!data || data.length === 0) return [];
 
-    // ✅ 逐条解密 encryptedContent
     const results: CommunityPostDecrypted[] = [];
     for (const item of data) {
       let content = '';
       if (item.encryptedContent) {
-        content = decryptField(item.encryptedContent) ?? '';
+        // ✅ 用固定密钥解密，所有用户都能读取
+        content = decryptPublicField(item.encryptedContent) ?? '';
       } else if (item.content) {
-        // 兼容旧明文数据（迁移期）
-        content = item.content;
+        content = item.content; // 兼容旧明文数据
       }
 
-      // 解密失败的帖子跳过，不展示
       if (!content) continue;
 
       results.push({
         _id:       item._id,
         userId:    item.userId,
         moodKey:   item.moodKey,
-        content,                    // ✅ 解密后明文，仅在内存中
+        content,
         timestamp: item.timestamp,
         date:      item.date,
         reactions: item.reactions ?? { candle: 0, hug: 0, sparkle: 0 },
       });
     }
+
     return results;
   } catch (error) {
     return [];
