@@ -4,7 +4,6 @@ import config from '../config';
 declare const wx: any;
 
 const FALLBACK_SECRET = config.AES_SECRET_KEY;
-const USER_ID_STORAGE_KEY = 'userId';
 const OPEN_ID_STORAGE_KEY = 'openId';
 
 // ============================================
