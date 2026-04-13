@@ -53,7 +53,7 @@
         wx:for="{{item.reactionList}}"
         wx:for-item="reaction"
         wx:key="key"
-        class="reaction-btn {{reactedMap[item._id] === reaction.key ? 'reaction-btn-active' : ''}}"
+        class="reaction-btn {{reactedMap[item._id][reaction.key] ? 'reaction-btn-active' : ''}}"
         bind:tap="onReact"
         data-postid="{{item._id}}"
         data-reactionkey="{{reaction.key}}"

@@ -107,7 +107,7 @@ Page({
     publishing: false,
 
     // 已回应过的帖子（本地记录，防重复点击）
-    reactedMap: {} as Record<string, ReactionKey>,
+    reactedMap: {} as Record<string, Record<string, boolean>>,
   },
 
   onLoad() {},
@@ -246,11 +246,8 @@ Page({
   
     const { reactedMap, posts } = this.data;
   
-    // 本地防重复点击
-    if (reactedMap[postid]) {
-      wx.showToast({ title: '已经回应过了', icon: 'none' });
-      return;
-    }
+    // ✅ 判断当前这个帖子的这个反应是否已点击
+    const isReacted = reactedMap[postid]?.[reactionkey] === true;
   
     // ✅ 乐观更新 UI
     const updatedPosts = posts.map((post: any) => {
@@ -259,12 +256,19 @@ Page({
         ...post,
         reactionList: post.reactionList.map((r: any) => {
           if (r.key !== reactionkey) return r;
-          return { ...r, count: r.count + 1 };
+          return { ...r, count: r.count + (isReacted ? -1 : 1) };
         }),
       };
     });
   
-    const updatedReactedMap = { ...reactedMap, [postid]: reactionkey };
+    // ✅ 更新 reactedMap，每个反应独立记录
+    const updatedReactedMap = {
+      ...reactedMap,
+      [postid]: {
+        ...(reactedMap[postid] || {}),
+        [reactionkey]: !isReacted,  // toggle
+      },
+    };
   
     this.setData({
       posts: updatedPosts,
@@ -272,11 +276,11 @@ Page({
     });
   
     // 请求云端
-    const ok = await reactToPost(postid, reactionkey);
-    if (!ok) {
-      // ✅ 云端拒绝（already_reacted 或其他错误）→ 回滚 UI
+    const result = await reactToPost(postid, reactionkey);
+    if (!result.success) {
+      // 云端失败 → 回滚 UI
       this.setData({ posts, reactedMap });
-      wx.showToast({ title: '已经回应过了', icon: 'none' });
+      wx.showToast({ title: '操作失败，请重试', icon: 'none' });
     }
   },
 

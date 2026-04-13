@@ -425,17 +425,19 @@ export async function loadTodayActiveCount(): Promise<number> {
 export async function reactToPost(
   postId: string,
   reactionKey: 'candle' | 'hug' | 'sparkle'
-): Promise<boolean> {
+): Promise<{ success: boolean; action?: 'added' | 'removed' }> {
   try {
     const result = await wx.cloud.callFunction({
       name: 'reactToPost',
       data: { postId, reactionKey },
     });
     const res = result.result as any;
-    // already_reacted 也返回 false，让 UI 回滚
-    return res.success === true;
+    return {
+      success: res.success === true,
+      action: res.action,
+    };
   } catch (error) {
-    return false;
+    return { success: false };
   }
 }
 
