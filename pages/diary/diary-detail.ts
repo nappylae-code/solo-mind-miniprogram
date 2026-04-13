@@ -80,7 +80,7 @@ Page({
       cancelText: '取消',
       success: async (res) => {
         if (!res.confirm) return;
-        const userId = getUserId();
+        const userId = getOpenId();
         if (!userId) return;
 
         wx.showLoading({ title: '删除中...' });

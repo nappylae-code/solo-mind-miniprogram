@@ -5,8 +5,5 @@
   "main": "index.js",
   "dependencies": {
     "wx-server-sdk": "~2.6.3"
-  },
-  "devDependencies": {
-    "@types/node": "^25.6.0"
   }
 }
