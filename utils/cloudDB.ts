@@ -427,15 +427,17 @@ export async function reactToPost(
   reactionKey: 'candle' | 'hug' | 'sparkle'
 ): Promise<boolean> {
   try {
-    // ✅ 通过云函数更新，云函数有管理员权限
-    // 且云函数内部只允许更新 reactions 字段
     const result = await wx.cloud.callFunction({
       name: 'reactToPost',
       data: { postId, reactionKey },
     });
-    return (result.result as any).success === true;
+    const res = result.result as any;
+    // already_reacted 也返回 false，让 UI 回滚
+    return res.success === true;
   } catch (error) {
     return false;
   }
 }
+
+
 

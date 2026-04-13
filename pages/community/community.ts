@@ -243,16 +243,16 @@ Page({
       postid: string;
       reactionkey: ReactionKey;
     };
-
+  
     const { reactedMap, posts } = this.data;
-
-    // 防止重复点击同一个反应
-    if (reactedMap[postid] === reactionkey) {
+  
+    // 本地防重复点击
+    if (reactedMap[postid]) {
       wx.showToast({ title: '已经回应过了', icon: 'none' });
       return;
     }
-
-    // ✅ 乐观更新 UI（先更新界面，再请求云端）
+  
+    // ✅ 乐观更新 UI
     const updatedPosts = posts.map((post: any) => {
       if (post._id !== postid) return post;
       return {
@@ -263,20 +263,20 @@ Page({
         }),
       };
     });
-
+  
     const updatedReactedMap = { ...reactedMap, [postid]: reactionkey };
-
+  
     this.setData({
       posts: updatedPosts,
       reactedMap: updatedReactedMap,
     });
-
+  
     // 请求云端
     const ok = await reactToPost(postid, reactionkey);
     if (!ok) {
-      // 云端失败则回滚 UI
+      // ✅ 云端拒绝（already_reacted 或其他错误）→ 回滚 UI
       this.setData({ posts, reactedMap });
-      wx.showToast({ title: '回应失败，请重试', icon: 'none' });
+      wx.showToast({ title: '已经回应过了', icon: 'none' });
     }
   },
 
