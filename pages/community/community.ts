@@ -98,6 +98,7 @@ Page({
     posts: [] as ReturnType<typeof decoratePost>[],
     listEmpty: false,
     loading: false,
+    refreshing: false,  // ✅ 新增：专门控制下拉刷新动画
 
     // 发布弹窗
     showPublishModal: false,
@@ -128,7 +129,6 @@ Page({
     this.setData({ loading: true });
     wx.showLoading({ title: '加载中...' });
     try {
-      // ✅ 同时加载帖子、今日人数、当前用户的点击记录
       const [posts, count, reactedMap] = await Promise.all([
         loadCommunityPosts(this.data.activeMoodFilter || undefined),
         loadTodayActiveCount(),
@@ -136,18 +136,23 @@ Page({
       ]);
   
       const decorated = posts.map(decoratePost);
+  
+      // ✅ loading: false 和数据更新放在同一个 setData 里
       this.setData({
+        loading: false,  // ✅ 先设为 false，让刷新动画停止
         posts: decorated,
         listEmpty: decorated.length === 0,
         todayCount: count,
-        reactedMap,  // ✅ 用云端数据初始化，换设备也能同步
+        reactedMap,
         ready: true,
       });
+  
     } catch (e) {
+      this.setData({ loading: false });  // ✅ 失败时也要停止
       wx.showToast({ title: '加载失败', icon: 'none' });
     } finally {
       wx.hideLoading();
-      this.setData({ loading: false });
+      // ✅ finally 里不再设置 loading，已经在上面处理了
     }
   },
 
