@@ -17,6 +17,13 @@ const DIARY_COLLECTION = 'diaryEntries';
 const MOOD_CACHE_KEY = 'moodEntriesCache';
 const DIARY_CACHE_KEY = 'diaryEntriesCache';
 
+// ✅ 新增：缓存时间戳 key
+const MOOD_CACHE_TIME_KEY = 'moodEntriesCacheTime';
+const DIARY_CACHE_TIME_KEY = 'diaryEntriesCacheTime';
+
+// ✅ 新增：缓存有效期（毫秒）
+const CACHE_TTL = 5 * 60 * 1000; // 5 分钟
+
 // ============================================
 // Interfaces
 // ============================================
@@ -140,6 +147,7 @@ export async function loadMoodFromCloud(
     }
 
     wx.setStorageSync(MOOD_CACHE_KEY, JSON.stringify(entries));
+    wx.setStorageSync(MOOD_CACHE_TIME_KEY, Date.now());
     return entries;
 
   } catch (error) {
@@ -249,6 +257,7 @@ export async function loadDiaryFromCloud(
     }
 
     wx.setStorageSync(DIARY_CACHE_KEY, JSON.stringify(entries));
+    wx.setStorageSync(DIARY_CACHE_TIME_KEY, Date.now());
     return entries;
 
   } catch (error) {
@@ -494,5 +503,55 @@ export async function loadMyReactions(
     return reactedMap;
   } catch {
     return {};
+  }
+}
+
+// ============================================
+// ✅ 新增：缓存工具函数，供页面层调用
+// ============================================
+
+// 从本地缓存读取 mood 数据（不请求云端）
+export function loadMoodFromCache(): Record<string, {
+  timestamp: number; moodKey: string; note?: string
+}> | null {
+  try {
+    const cached = wx.getStorageSync(MOOD_CACHE_KEY);
+    return cached ? JSON.parse(cached) : null;
+  } catch {
+    return null;
+  }
+}
+
+// 从本地缓存读取 diary 数据（不请求云端）
+export function loadDiaryFromCache(): Record<string, {
+  timestamp: number; content?: string; moodKey?: string
+}> | null {
+  try {
+    const cached = wx.getStorageSync(DIARY_CACHE_KEY);
+    return cached ? JSON.parse(cached) : null;
+  } catch {
+    return null;
+  }
+}
+
+// 判断 mood 缓存是否过期
+export function isMoodCacheExpired(): boolean {
+  try {
+    const cacheTime = wx.getStorageSync(MOOD_CACHE_TIME_KEY);
+    if (!cacheTime) return true;
+    return Date.now() - cacheTime > CACHE_TTL;
+  } catch {
+    return true;
+  }
+}
+
+// 判断 diary 缓存是否过期
+export function isDiaryCacheExpired(): boolean {
+  try {
+    const cacheTime = wx.getStorageSync(DIARY_CACHE_TIME_KEY);
+    if (!cacheTime) return true;
+    return Date.now() - cacheTime > CACHE_TTL;
+  } catch {
+    return true;
   }
 }
