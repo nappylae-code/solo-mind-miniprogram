@@ -20,29 +20,26 @@ exports.main = async (event, context) => {
 
     if (data.length > 0) {
       const record = data[0];
-
-      // ✅ 同一天已经累加过了，不重复累加
+    
       if (record.lastIncrementDate === today) {
         return { success: true, skipped: true, reason: '今日已累加' };
       }
-
-      // 不同天才累加
+    
       await db.collection(COLLECTION)
         .doc(record._id)
         .update({
           data: {
-            remainingCount: _.inc(1),
-            lastIncrementDate: today, // ✅ 记录最后累加日期
+            remainingCount: _.inc(3),  // ✅ 改为 +3
+            lastIncrementDate: today,
           }
         });
     } else {
-      // 首次，新建记录
       await db.collection(COLLECTION).add({
         data: {
           openid,
-          remainingCount: 1,
+          remainingCount: 3,           // ✅ 改为 3
           lastSentDate: '',
-          lastIncrementDate: today, // ✅ 新增字段
+          lastIncrementDate: today,
         }
       });
     }
