@@ -101,11 +101,13 @@ export async function loadMoodFromCloud(
     const hashedUserId = hashUserId(userId);
 
     // ✅ 分批加载，突破 limit(100) 限制
+    const MAX_BATCHES = 20; // 最多加载 2000 条，足够使用
+    let batchCount = 0;
     let allData: any[] = [];
     let skip = 0;
     const batchSize = 100;
 
-    while (true) {
+    while (batchCount < MAX_BATCHES) {
       const { data } = await db
         .collection(MOOD_COLLECTION)
         .where({ userId: hashedUserId })
@@ -113,11 +115,12 @@ export async function loadMoodFromCloud(
         .skip(skip)
         .limit(batchSize)
         .get();
-
+    
       if (!data || data.length === 0) break;
       allData = allData.concat(data);
-      if (data.length < batchSize) break; // 最后一批，退出循环
+      if (data.length < batchSize) break;
       skip += batchSize;
+      batchCount++;
     }
 
     const entries: Record<string, { timestamp: number; moodKey: string; note?: string }> = {};
@@ -213,20 +216,23 @@ export async function loadDiaryFromCloud(
     let allData: any[] = [];
     let skip = 0;
     const batchSize = 100;
+    const MAX_BATCHES = 20; // 最多加载 2000 条，足够使用
+    let batchCount = 0;
 
-    while (true) {
+    while (batchCount < MAX_BATCHES) {
       const { data } = await db
-        .collection(DIARY_COLLECTION)
+        .collection(MOOD_COLLECTION)
         .where({ userId: hashedUserId })
         .orderBy('date', 'desc')
         .skip(skip)
         .limit(batchSize)
         .get();
-
+    
       if (!data || data.length === 0) break;
       allData = allData.concat(data);
-      if (data.length < batchSize) break; // 最后一批，退出循环
+      if (data.length < batchSize) break;
       skip += batchSize;
+      batchCount++;
     }
 
     const entries: Record<string, { timestamp: number; content?: string; moodKey?: string }> = {};
