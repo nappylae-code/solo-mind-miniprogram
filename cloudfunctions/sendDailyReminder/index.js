@@ -6,7 +6,7 @@ const COLLECTION = 'subscribeRecords';
 const _ = db.command;
 
 // ✅ 从微信公众平台获取的模板ID，填入这里
-const TEMPLATE_ID = '你的模板ID_填在这里';
+const TEMPLATE_ID = 'SaSxE7UpdBSFTE2rI2Jgt4Ujmzz5miL_FuOP3hx0gqw';
 
 exports.main = async (event, context) => {
   const today = getTodayKey();
