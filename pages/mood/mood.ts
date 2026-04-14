@@ -2,19 +2,19 @@ import { MOODS, getMoodByKey, MoodType } from '../../constants/mood';
 import {
   saveMoodToCloud,
   loadMoodFromCloud,
-  loadMoodFromCache,      // ✅ 新增
-  isMoodCacheExpired,     // ✅ 新增
+  loadMoodFromCache,
+  isMoodCacheExpired,
 } from '../../utils/cloudDB';
 import { getOpenId } from '../../utils/encryption';
 import { isMember, MEMBERSHIP } from '../../constants/membership';
-
+import config from '../../config';
 
 declare const wx: any;
 
 // ============================================
 // ✅ 订阅消息模板ID
 // ============================================
-const SUBSCRIBE_TEMPLATE_ID = 'SaSxE7UpdBSFTE2rI2Jgt4Ujmzz5miL_FuOP3hx0gqw';
+const SUBSCRIBE_TEMPLATE_ID = config.SUBSCRIBE_TEMPLATE_ID;
 
 // ============================================
 // Daily Quotes - rotates based on date
@@ -356,5 +356,5 @@ Page({
       });
     }
   },
-  
+
 });
