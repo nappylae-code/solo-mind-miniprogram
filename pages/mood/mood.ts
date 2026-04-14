@@ -311,6 +311,9 @@ Page({
       });
       return;
     }
+
+    // ✅ 新增：保存成功后额外累加一次订阅次数
+    this.silentSubscribe();
   
     const todayKey = getTodayKey();
     wx.showLoading({ title: '保存中...' });
@@ -334,9 +337,6 @@ Page({
       };
       this.setData({ moodEntries: updated });
       this.computeWeekData();
-  
-      // ✅ 新增：保存成功后额外累加一次订阅次数
-      this.silentSubscribe();
   
       wx.showModal({
         title: '已保存！',
