@@ -3,11 +3,10 @@
     "pages/index/index",
     "pages/mood/mood",
     "pages/diary/diary",
-    "pages/community/community",
-    "pages/profile/profile",
     "pages/diary/diary-detail",
     "pages/diary/diary-edit",
-    "pages/report/report"
+    "pages/report/report",
+    "pages/profile/profile"
   ],
   "window": {
     "navigationBarTitleText": "Nearmi",
@@ -33,12 +32,6 @@
         "text": "日记",
         "iconPath": "images/diary.png",
         "selectedIconPath": "images/diary-active.png"
-      },
-      {
-        "pagePath": "pages/community/community",
-        "text": "广场",
-        "iconPath": "images/community.png",
-        "selectedIconPath": "images/community-active.png"
       },
       {
         "pagePath": "pages/profile/profile",

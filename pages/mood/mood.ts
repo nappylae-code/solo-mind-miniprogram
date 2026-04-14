@@ -1,9 +1,20 @@
 import { MOODS, getMoodByKey, MoodType } from '../../constants/mood';
-import { saveMoodToCloud, loadMoodFromCloud } from '../../utils/cloudDB';
+import {
+  saveMoodToCloud,
+  loadMoodFromCloud,
+  loadMoodFromCache,
+  isMoodCacheExpired,
+} from '../../utils/cloudDB';
 import { getOpenId } from '../../utils/encryption';
 import { isMember, MEMBERSHIP } from '../../constants/membership';
+import config from '../../config';
 
 declare const wx: any;
+
+// ============================================
+// ✅ 订阅消息模板ID
+// ============================================
+const SUBSCRIBE_TEMPLATE_ID = config.SUBSCRIBE_TEMPLATE_ID;
 
 // ============================================
 // Daily Quotes - rotates based on date
@@ -127,6 +138,30 @@ Page({
     });
   },
 
+  // ============================================
+  // ✅ 新增：静默订阅，用户无感知累加发送次数
+  // ============================================
+  silentSubscribe() {
+    wx.requestSubscribeMessage({
+      tmplIds: [SUBSCRIBE_TEMPLATE_ID],
+      success: (res: any) => {
+        if (res[SUBSCRIBE_TEMPLATE_ID] === 'accept') {
+          // 用户同意（首次弹窗）或静默成功（已勾选"总是保持"）
+          // 调用云函数累加次数
+          wx.cloud.callFunction({
+            name: 'manageSubscribe',
+            data: { action: 'increment' },
+          }).catch(() => {
+            // 静默失败，不影响主流程
+          });
+        }
+      },
+      fail: () => {
+        // 静默失败，不影响主流程
+      },
+    });
+  },
+
   onShow() {
     this.loadData();
   },
@@ -139,20 +174,35 @@ Page({
         wx.redirectTo({ url: '/pages/index/index' });
         return;
       }
-
+  
       const userNickname = wx.getStorageSync('userNickname') || null;
       const userAvatarUrl = wx.getStorageSync('userAvatarUrl') || null;
       this.setData({ userId, userNickname, userAvatarUrl });
-
-      wx.showLoading({ title: '加载中...' });
-      const entries = await loadMoodFromCloud(userId);
-      wx.hideLoading();
-
-      this.setData({ moodEntries: entries });
-      this.computeWeekData();
-      this.syncTodayEntry();
-      this.setData({ ready: true });
-
+  
+      // ✅ 第一步：优先读取本地缓存，立即渲染，用户无感知等待
+      const cached = loadMoodFromCache();
+      if (cached) {
+        this.setData({ moodEntries: cached });
+        this.computeWeekData();
+        this.syncTodayEntry();
+        this.setData({ ready: true });
+      }
+  
+      // ✅ 第二步：判断缓存是否过期，过期才请求云端
+      if (isMoodCacheExpired()) {
+        // 有缓存时静默刷新（不显示 Loading），无缓存时显示 Loading
+        if (!cached) wx.showLoading({ title: '加载中...' });
+  
+        const entries = await loadMoodFromCloud(userId);
+  
+        if (!cached) wx.hideLoading();
+  
+        this.setData({ moodEntries: entries });
+        this.computeWeekData();
+        this.syncTodayEntry();
+        this.setData({ ready: true });
+      }
+  
     } catch (error) {
       wx.hideLoading();
       this.setData({ ready: true });
@@ -262,6 +312,9 @@ Page({
       return;
     }
 
+    // ✅ 新增：保存成功后额外累加一次订阅次数
+    this.silentSubscribe();
+  
     const todayKey = getTodayKey();
     wx.showLoading({ title: '保存中...' });
     const success = await saveMoodToCloud({
@@ -272,7 +325,7 @@ Page({
       timestamp: Date.now()
     });
     wx.hideLoading();
-
+  
     if (success) {
       const updated = {
         ...moodEntries,
@@ -284,9 +337,10 @@ Page({
       };
       this.setData({ moodEntries: updated });
       this.computeWeekData();
+  
       wx.showModal({
         title: '已保存！',
-        content: '今天的心情已记录',
+        content: '今天的心情已记录 🌿',
         showCancel: false,
         confirmText: '确定'
       });
@@ -298,5 +352,6 @@ Page({
         confirmText: '确定'
       });
     }
-  }
+  },
+
 });

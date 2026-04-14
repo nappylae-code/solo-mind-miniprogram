@@ -89,6 +89,7 @@ Page({
 
     // 今日活跃
     todayCount: 0,
+    lastLoadTime: 0,  // ✅ 记录上次加载时间
 
     // 情绪筛选
     moodFilters: MOOD_FILTERS,
@@ -121,6 +122,14 @@ Page({
       return;
     }
     this.setData({ userId });
+  
+    // ✅ 距离上次加载不足 60 秒，跳过重复加载
+    const now = Date.now();
+    if (now - this.data.lastLoadTime < 60 * 1000 && this.data.posts.length > 0) {
+      return;
+    }
+  
+    this.setData({ lastLoadTime: now });
     this.loadAll();
   },
 
