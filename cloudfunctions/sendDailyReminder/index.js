@@ -7,7 +7,7 @@ const COLLECTION = 'subscribeRecords';
 const _ = db.command;
 const TEMPLATE_ID = 'SaSxE7UpdBSFTE2rI2Jgt4Ujmzz5miL_FuOP3hx0gqw';
 
-// ✅ 通过 AppID + AppSecret 获取 access_token
+// 通过 AppID + AppSecret 获取 access_token
 function getAccessToken(appId, appSecret) {
   return new Promise((resolve, reject) => {
     const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`;
@@ -30,14 +30,14 @@ function getAccessToken(appId, appSecret) {
   });
 }
 
-// ✅ 通过 HTTPS 直接调用微信接口发送订阅消息
+// 通过 HTTPS 直接调用微信接口发送订阅消息
 function sendSubscribeMsg(accessToken, openid, today) {
   return new Promise((resolve, reject) => {
     const postData = JSON.stringify({
       touser: openid,
       template_id: TEMPLATE_ID,
       page: 'pages/mood/mood',
-      miniprogram_state: 'developer',
+      miniprogram_state: 'developer', // 上线前改为 formal
       lang: 'zh_CN',
       data: {
         thing3: { value: '该记录今天的心情啦' },
@@ -75,7 +75,7 @@ function sendSubscribeMsg(accessToken, openid, today) {
 exports.main = async (event, context) => {
   const today = getTodayKey();
 
-  // ✅ 从环境变量读取（在云函数控制台设置）
+  // 从云函数环境变量读取（在云开发控制台 → 云函数 → Version and Config 设置）
   const APP_ID = process.env.APP_ID;
   const APP_SECRET = process.env.APP_SECRET;
 
@@ -87,13 +87,11 @@ exports.main = async (event, context) => {
   let accessToken;
   try {
     accessToken = await getAccessToken(APP_ID, APP_SECRET);
-    console.log('获取 access_token 成功');
   } catch (err) {
-    console.error('获取 access_token 失败:', err.message);
     return { success: false, error: 'access_token 获取失败' };
   }
 
-  // 查询需要发送的用户
+  // 查询所有有剩余次数、今天还没发过的用户
   const { data: users } = await db.collection(COLLECTION)
     .where({
       remainingCount: _.gt(0),
@@ -112,10 +110,9 @@ exports.main = async (event, context) => {
   for (const user of users) {
     try {
       const result = await sendSubscribeMsg(accessToken, user.openid, today);
-      console.log('发送结果:', JSON.stringify(result));
 
       if (result.errcode === 0) {
-        // 发送成功
+        // 发送成功：次数 -1，更新最后发送日期
         await db.collection(COLLECTION)
           .doc(user._id)
           .update({
@@ -126,7 +123,7 @@ exports.main = async (event, context) => {
           });
         sentCount++;
       } else if (result.errcode === 43101) {
-        // 用户取消订阅，清零次数
+        // 用户已取消订阅，清零次数，停止继续推送
         await db.collection(COLLECTION)
           .doc(user._id)
           .update({ data: { remainingCount: 0 } });
@@ -135,7 +132,6 @@ exports.main = async (event, context) => {
         errors.push({ openid: user.openid, errCode: result.errcode, errMsg: result.errmsg });
       }
     } catch (err) {
-      console.error('发送失败:', err.message);
       errors.push({ openid: user.openid, error: err.message });
     }
   }
