@@ -28,7 +28,17 @@ exports.main = async (event, context) => {
   const errors = [];
 
   for (const user of users) {
+    console.log('用户记录:', JSON.stringify(user)); // ✅ 加这行
+    console.log('openid:', user.openid);            // ✅ 加这行
     try {
+      console.log('准备发送，参数:', JSON.stringify({
+        touser: user.openid,
+        templateId: TEMPLATE_ID,
+        thing3value: '该记录今天的心情啦 🌿',
+        time7value: `${today} 21:00`,
+        miniprogramState: 'developer',
+      }));
+
       // 发送订阅消息
       await cloud.openapi.subscribeMessage.send({
         touser: user.openid,
@@ -54,6 +64,12 @@ exports.main = async (event, context) => {
 
       sentCount++;
     } catch (err) {
+      // ✅ 打印完整错误信息
+      console.error('发送失败完整错误:', JSON.stringify(err));
+      console.error('errCode:', err.errCode);
+      console.error('errMsg:', err.errMsg);
+      console.error('requestID:', err.requestID);
+
       // 43101 = 用户已取消订阅，清零次数，停止继续推送
       if (err.errCode === 43101) {
         await db.collection(COLLECTION)
