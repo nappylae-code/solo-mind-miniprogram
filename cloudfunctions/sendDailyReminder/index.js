@@ -75,7 +75,6 @@ function sendSubscribeMsg(accessToken, openid, today) {
 exports.main = async (event, context) => {
   const today = getTodayKey();
 
-  // 从云函数环境变量读取（在云开发控制台 → 云函数 → Version and Config 设置）
   const APP_ID = process.env.APP_ID;
   const APP_SECRET = process.env.APP_SECRET;
 
@@ -83,7 +82,6 @@ exports.main = async (event, context) => {
     return { success: false, error: 'APP_ID 或 APP_SECRET 未配置' };
   }
 
-  // 获取 access_token
   let accessToken;
   try {
     accessToken = await getAccessToken(APP_ID, APP_SECRET);
@@ -91,7 +89,7 @@ exports.main = async (event, context) => {
     return { success: false, error: 'access_token 获取失败' };
   }
 
-  // 查询所有有剩余次数、今天还没发过的用户
+  // ✅ 【修改点1】查询条件：remainingCount > 0 且今天还没发过
   const { data: users } = await db.collection(COLLECTION)
     .where({
       remainingCount: _.gt(0),
@@ -112,25 +110,38 @@ exports.main = async (event, context) => {
       const result = await sendSubscribeMsg(accessToken, user.openid, today);
 
       if (result.errcode === 0) {
-        // 发送成功：次数 -1，更新最后发送日期
+        // ✅ 【修改点2】根据 remainingCount 决定更新方式
+        let newCount;
+        if (user.remainingCount > 7) {
+          // 超过7：发送后直接设定为7（上限收敛）
+          newCount = 7;
+        } else {
+          // 0 < remainingCount <= 7：正常 -1
+          newCount = user.remainingCount - 1;
+        }
+
         await db.collection(COLLECTION)
           .doc(user._id)
           .update({
             data: {
-              remainingCount: _.inc(-1),
+              remainingCount: newCount,
               lastSentDate: today,
             }
           });
         sentCount++;
+
       } else if (result.errcode === 43101) {
-        // 用户已取消订阅，清零次数，停止继续推送
+        // 用户已取消订阅，清零次数
         await db.collection(COLLECTION)
           .doc(user._id)
-          .update({ data: { remainingCount: 0 } });
+          .update({
+            data: { remainingCount: 0 }
+          });
         errors.push({ openid: user.openid, errCode: result.errcode, errMsg: result.errmsg });
       } else {
         errors.push({ openid: user.openid, errCode: result.errcode, errMsg: result.errmsg });
       }
+
     } catch (err) {
       errors.push({ openid: user.openid, error: err.message });
     }
