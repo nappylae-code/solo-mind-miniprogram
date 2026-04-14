@@ -6,6 +6,17 @@ import config from './config';
 // This must run before any module that uses crypto-js
 // ============================================
 
+// ============================================
+// ⚠️  广场功能（Community）暂时隐藏
+// 原因：工具>备忘录 类目不支持 UGC 公开内容传播
+// 计划：将来注册企业主体 + 申请社交类目后恢复
+//       或在 App 版本中作为核心功能重新实现
+// 相关文件：
+//   - pages/community/（代码保留，未删除）
+//   - cloudfunctions/getMyReactions/
+//   - cloudfunctions/reactToPost/
+// ============================================
+
 const globalObj = typeof globalThis !== 'undefined' ? globalThis :
   typeof global !== 'undefined' ? global :
   typeof window !== 'undefined' ? window : {} as any;
