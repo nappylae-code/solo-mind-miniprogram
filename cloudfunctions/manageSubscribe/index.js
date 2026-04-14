@@ -16,11 +16,25 @@ exports.main = async (event, context) => {
       .where({ openid })
       .get();
 
+    const today = getTodayKey(); // ✅ 新增
+
     if (data.length > 0) {
-      // 已存在记录，次数 +1
+      const record = data[0];
+
+      // ✅ 同一天已经累加过了，不重复累加
+      if (record.lastIncrementDate === today) {
+        return { success: true, skipped: true, reason: '今日已累加' };
+      }
+
+      // 不同天才累加
       await db.collection(COLLECTION)
-        .doc(data[0]._id)
-        .update({ data: { remainingCount: _.inc(1) } });
+        .doc(record._id)
+        .update({
+          data: {
+            remainingCount: _.inc(1),
+            lastIncrementDate: today, // ✅ 记录最后累加日期
+          }
+        });
     } else {
       // 首次，新建记录
       await db.collection(COLLECTION).add({
@@ -28,6 +42,7 @@ exports.main = async (event, context) => {
           openid,
           remainingCount: 1,
           lastSentDate: '',
+          lastIncrementDate: today, // ✅ 新增字段
         }
       });
     }
@@ -45,3 +60,8 @@ exports.main = async (event, context) => {
 
   return { success: false, error: 'Unknown action' };
 };
+
+function getTodayKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
