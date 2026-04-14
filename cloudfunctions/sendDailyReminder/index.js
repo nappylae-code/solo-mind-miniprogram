@@ -38,7 +38,7 @@ exports.main = async (event, context) => {
           thing1: { value: '该记录今天的心情啦 🌿' },
           time2:  { value: `${today} 21:00` },  // ✅ 晚上9点
         },
-        miniprogramState: 'formal', // 开发阶段改为 developer
+        miniprogramState: 'developer', // 开发阶段改为 developer
         lang: 'zh_CN',
       });
 
