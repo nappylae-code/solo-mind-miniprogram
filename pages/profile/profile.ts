@@ -239,20 +239,6 @@ Page({
       },
     });
   },
-
-  onEditAvatar() {
-    wx.chooseMedia({
-      count: 1,
-      mediaType: ['image'],
-      sourceType: ['album', 'camera'],
-      success: (res: any) => {
-        const path = res.tempFiles[0].tempFilePath;
-        wx.setStorageSync('userAvatarUrl', path);
-        this.setData({ userAvatarUrl: path });
-        wx.showToast({ title: '头像已更新', icon: 'success' });
-      },
-    });
-  },
   
   onEditAvatar() {
     wx.chooseMedia({

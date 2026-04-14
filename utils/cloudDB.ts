@@ -98,33 +98,42 @@ export async function loadMoodFromCloud(
 ): Promise<Record<string, { timestamp: number; moodKey: string; note?: string }>> {
   try {
     const db = wx.cloud.database();
-
-    // ✅ 查询用哈希后的 userId
     const hashedUserId = hashUserId(userId);
 
-    const { data } = await db
-      .collection(MOOD_COLLECTION)
-      .where({ userId: hashedUserId })
-      .orderBy('date', 'desc')
-      .limit(100)
-      .get();
+    // ✅ 分批加载，突破 limit(100) 限制
+    let allData: any[] = [];
+    let skip = 0;
+    const batchSize = 100;
+
+    while (true) {
+      const { data } = await db
+        .collection(MOOD_COLLECTION)
+        .where({ userId: hashedUserId })
+        .orderBy('date', 'desc')
+        .skip(skip)
+        .limit(batchSize)
+        .get();
+
+      if (!data || data.length === 0) break;
+      allData = allData.concat(data);
+      if (data.length < batchSize) break; // 最后一批，退出循环
+      skip += batchSize;
+    }
 
     const entries: Record<string, { timestamp: number; moodKey: string; note?: string }> = {};
 
-    if (data && data.length > 0) {
-      for (const item of data) {
-        let note = '';
-        if (item.encryptedNote) {
-          note = decryptField(item.encryptedNote) ?? '';
-        } else if (item.note) {
-          note = item.note;
-        }
-        entries[item.date] = {
-          timestamp: item.timestamp,
-          moodKey: item.moodKey,
-          note: note || undefined,
-        };
+    for (const item of allData) {
+      let note = '';
+      if (item.encryptedNote) {
+        note = decryptField(item.encryptedNote) ?? '';
+      } else if (item.note) {
+        note = item.note;
       }
+      entries[item.date] = {
+        timestamp: item.timestamp,
+        moodKey: item.moodKey,
+        note: note || undefined,
+      };
     }
 
     wx.setStorageSync(MOOD_CACHE_KEY, JSON.stringify(entries));
@@ -198,30 +207,39 @@ export async function loadDiaryFromCloud(
 ): Promise<Record<string, { timestamp: number; content?: string; moodKey?: string }>> {
   try {
     const db = wx.cloud.database();
-
-    // ✅ 查询用哈希后的 userId
     const hashedUserId = hashUserId(userId);
 
-    const { data } = await db
-      .collection(DIARY_COLLECTION)
-      .where({ userId: hashedUserId })
-      .orderBy('date', 'desc')
-      .limit(100)
-      .get();
+    // ✅ 分批加载，突破 limit(100) 限制
+    let allData: any[] = [];
+    let skip = 0;
+    const batchSize = 100;
+
+    while (true) {
+      const { data } = await db
+        .collection(DIARY_COLLECTION)
+        .where({ userId: hashedUserId })
+        .orderBy('date', 'desc')
+        .skip(skip)
+        .limit(batchSize)
+        .get();
+
+      if (!data || data.length === 0) break;
+      allData = allData.concat(data);
+      if (data.length < batchSize) break; // 最后一批，退出循环
+      skip += batchSize;
+    }
 
     const entries: Record<string, { timestamp: number; content?: string; moodKey?: string }> = {};
 
-    if (data && data.length > 0) {
-      for (const item of data) {
-        const content = item.encryptedContent
-          ? decryptField(item.encryptedContent) ?? ''
-          : '';
-        entries[item.date] = {
-          timestamp: item.timestamp,
-          content: content || undefined,
-          moodKey: item.moodKey || undefined,
-        };
-      }
+    for (const item of allData) {
+      const content = item.encryptedContent
+        ? decryptField(item.encryptedContent) ?? ''
+        : '';
+      entries[item.date] = {
+        timestamp: item.timestamp,
+        content: content || undefined,
+        moodKey: item.moodKey || undefined,
+      };
     }
 
     wx.setStorageSync(DIARY_CACHE_KEY, JSON.stringify(entries));
@@ -472,4 +490,3 @@ export async function loadMyReactions(
     return {};
   }
 }
-
