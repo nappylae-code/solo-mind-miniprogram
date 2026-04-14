@@ -136,9 +136,6 @@ Page({
         ? MEMBERSHIP.MOOD_NOTE_LIMIT_MEMBER
         : MEMBERSHIP.MOOD_NOTE_LIMIT_FREE,
     });
-
-    // ✅ 新增：页面加载时静默累加订阅次数
-    this.silentSubscribe();
   },
 
   // ============================================
