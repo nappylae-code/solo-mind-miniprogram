@@ -12,6 +12,11 @@ import { isMember, MEMBERSHIP } from '../../constants/membership';
 declare const wx: any;
 
 // ============================================
+// ✅ 订阅消息模板ID
+// ============================================
+const SUBSCRIBE_TEMPLATE_ID = 'SaSxE7UpdBSFTE2rI2Jgt4Ujmzz5miL_FuOP3hx0gqw';
+
+// ============================================
 // Daily Quotes - rotates based on date
 // ============================================
 const DAILY_QUOTES: string[] = [
@@ -130,6 +135,33 @@ Page({
       noteLimit: member
         ? MEMBERSHIP.MOOD_NOTE_LIMIT_MEMBER
         : MEMBERSHIP.MOOD_NOTE_LIMIT_FREE,
+    });
+
+    // ✅ 新增：页面加载时静默累加订阅次数
+    this.silentSubscribe();
+  },
+
+  // ============================================
+  // ✅ 新增：静默订阅，用户无感知累加发送次数
+  // ============================================
+  silentSubscribe() {
+    wx.requestSubscribeMessage({
+      tmplIds: [SUBSCRIBE_TEMPLATE_ID],
+      success: (res: any) => {
+        if (res[SUBSCRIBE_TEMPLATE_ID] === 'accept') {
+          // 用户同意（首次弹窗）或静默成功（已勾选"总是保持"）
+          // 调用云函数累加次数
+          wx.cloud.callFunction({
+            name: 'manageSubscribe',
+            data: { action: 'increment' },
+          }).catch(() => {
+            // 静默失败，不影响主流程
+          });
+        }
+      },
+      fail: () => {
+        // 静默失败，不影响主流程
+      },
     });
   },
 
@@ -282,7 +314,7 @@ Page({
       });
       return;
     }
-
+  
     const todayKey = getTodayKey();
     wx.showLoading({ title: '保存中...' });
     const success = await saveMoodToCloud({
@@ -293,7 +325,7 @@ Page({
       timestamp: Date.now()
     });
     wx.hideLoading();
-
+  
     if (success) {
       const updated = {
         ...moodEntries,
@@ -305,9 +337,13 @@ Page({
       };
       this.setData({ moodEntries: updated });
       this.computeWeekData();
+  
+      // ✅ 新增：保存成功后额外累加一次订阅次数
+      this.silentSubscribe();
+  
       wx.showModal({
         title: '已保存！',
-        content: '今天的心情已记录',
+        content: '今天的心情已记录 🌿',
         showCancel: false,
         confirmText: '确定'
       });
@@ -319,5 +355,6 @@ Page({
         confirmText: '确定'
       });
     }
-  }
+  },
+  
 });
