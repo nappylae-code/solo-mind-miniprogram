@@ -221,7 +221,7 @@ export async function loadDiaryFromCloud(
 
     while (batchCount < MAX_BATCHES) {
       const { data } = await db
-        .collection(MOOD_COLLECTION)
+        .collection(DIARY_COLLECTION)
         .where({ userId: hashedUserId })
         .orderBy('date', 'desc')
         .skip(skip)
