@@ -1,17 +1,99 @@
 const cloud = require('wx-server-sdk');
+const https = require('https');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
 const COLLECTION = 'subscribeRecords';
 const _ = db.command;
-
-// ✅ 从微信公众平台获取的模板ID，填入这里
 const TEMPLATE_ID = 'SaSxE7UpdBSFTE2rI2Jgt4Ujmzz5miL_FuOP3hx0gqw';
+
+// ✅ 通过 AppID + AppSecret 获取 access_token
+function getAccessToken(appId, appSecret) {
+  return new Promise((resolve, reject) => {
+    const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`;
+    https.get(url, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const result = JSON.parse(data);
+          if (result.access_token) {
+            resolve(result.access_token);
+          } else {
+            reject(new Error(`获取access_token失败: ${JSON.stringify(result)}`));
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }).on('error', reject);
+  });
+}
+
+// ✅ 通过 HTTPS 直接调用微信接口发送订阅消息
+function sendSubscribeMsg(accessToken, openid, today) {
+  return new Promise((resolve, reject) => {
+    const postData = JSON.stringify({
+      touser: openid,
+      template_id: TEMPLATE_ID,
+      page: 'pages/mood/mood',
+      miniprogram_state: 'developer',
+      lang: 'zh_CN',
+      data: {
+        thing3: { value: '该记录今天的心情啦' },
+        time7:  { value: `${today} 21:00` },
+      }
+    });
+
+    const options = {
+      hostname: 'api.weixin.qq.com',
+      path: `/cgi-bin/message/subscribe/send?access_token=${accessToken}`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+    req.on('error', reject);
+    req.write(postData);
+    req.end();
+  });
+}
 
 exports.main = async (event, context) => {
   const today = getTodayKey();
 
-  // 查询所有有剩余次数、今天还没发过的用户
+  // ✅ 从环境变量读取（在云函数控制台设置）
+  const APP_ID = process.env.APP_ID;
+  const APP_SECRET = process.env.APP_SECRET;
+
+  if (!APP_ID || !APP_SECRET) {
+    return { success: false, error: 'APP_ID 或 APP_SECRET 未配置' };
+  }
+
+  // 获取 access_token
+  let accessToken;
+  try {
+    accessToken = await getAccessToken(APP_ID, APP_SECRET);
+    console.log('获取 access_token 成功');
+  } catch (err) {
+    console.error('获取 access_token 失败:', err.message);
+    return { success: false, error: 'access_token 获取失败' };
+  }
+
+  // 查询需要发送的用户
   const { data: users } = await db.collection(COLLECTION)
     .where({
       remainingCount: _.gt(0),
@@ -28,55 +110,33 @@ exports.main = async (event, context) => {
   const errors = [];
 
   for (const user of users) {
-    console.log('用户记录:', JSON.stringify(user)); // ✅ 加这行
-    console.log('openid:', user.openid);            // ✅ 加这行
     try {
-      console.log('准备发送，参数:', JSON.stringify({
-        touser: user.openid,
-        templateId: TEMPLATE_ID,
-        thing3value: '该记录今天的心情啦 🌿',
-        time7value: `${today} 21:00`,
-        miniprogramState: 'developer',
-      }));
+      const result = await sendSubscribeMsg(accessToken, user.openid, today);
+      console.log('发送结果:', JSON.stringify(result));
 
-      // 发送订阅消息
-      await cloud.openapi.subscribeMessage.send({
-        touser: user.openid,
-        page: 'pages/mood/mood',
-        templateId: TEMPLATE_ID,
-        data: {
-          thing3: { value: '该记录今天的心情啦 🌿' },
-          time7:  { value: `${today} 21:00` },  // ✅ 晚上9点
-        },
-        miniprogramState: 'developer', // 开发阶段改为 developer
-        lang: 'zh_CN',
-      });
-
-      // 发送成功：次数 -1，更新最后发送日期
-      await db.collection(COLLECTION)
-        .doc(user._id)
-        .update({
-          data: {
-            remainingCount: _.inc(-1),
-            lastSentDate: today,
-          }
-        });
-
-      sentCount++;
-    } catch (err) {
-      // ✅ 打印完整错误信息
-      console.error('发送失败完整错误:', JSON.stringify(err));
-      console.error('errCode:', err.errCode);
-      console.error('errMsg:', err.errMsg);
-      console.error('requestID:', err.requestID);
-
-      // 43101 = 用户已取消订阅，清零次数，停止继续推送
-      if (err.errCode === 43101) {
+      if (result.errcode === 0) {
+        // 发送成功
+        await db.collection(COLLECTION)
+          .doc(user._id)
+          .update({
+            data: {
+              remainingCount: _.inc(-1),
+              lastSentDate: today,
+            }
+          });
+        sentCount++;
+      } else if (result.errcode === 43101) {
+        // 用户取消订阅，清零次数
         await db.collection(COLLECTION)
           .doc(user._id)
           .update({ data: { remainingCount: 0 } });
+        errors.push({ openid: user.openid, errCode: result.errcode, errMsg: result.errmsg });
+      } else {
+        errors.push({ openid: user.openid, errCode: result.errcode, errMsg: result.errmsg });
       }
-      errors.push({ openid: user.openid, errCode: err.errCode });
+    } catch (err) {
+      console.error('发送失败:', err.message);
+      errors.push({ openid: user.openid, error: err.message });
     }
   }
 
