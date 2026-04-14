@@ -15,6 +15,9 @@ const config = {
   // ✅ 新增：订阅消息模板 ID
   // 在微信公众平台 → 功能 → 订阅消息 → 我的模板 中查看
   SUBSCRIBE_TEMPLATE_ID: 'YOUR_SUBSCRIBE_TEMPLATE_ID',
+
+  APP_ID: 'YOUR_APP_ID',
+  APP_SECRET: 'YOUR_APP_SECRET',
 };
 
 export default config;
