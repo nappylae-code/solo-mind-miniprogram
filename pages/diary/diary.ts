@@ -1,4 +1,8 @@
-import { loadDiaryFromCloud } from '../../utils/cloudDB';
+import {
+  loadDiaryFromCloud,
+  loadDiaryFromCache,      // ✅ 新增
+  isDiaryCacheExpired,     // ✅ 新增
+} from '../../utils/cloudDB';
 import { getOpenId } from '../../utils/encryption';
 import { getMoodByKey } from '../../constants/mood';
 
@@ -83,34 +87,34 @@ Page({
       wx.redirectTo({ url: '/pages/index/index' });
       return;
     }
-    this.setData({ userId, loading: true });
-    wx.showLoading({ title: '加载中...' });
-
-    try {
-      const entries = await loadDiaryFromCloud(userId);
-      // 转换为列表，按时间倒序
-      const list: DiaryItem[] = Object.entries(entries)
-        .sort(([, a], [, b]) => b.timestamp - a.timestamp)
-        .map(([date, entry]) => {
-          const mood = getMoodByKey(entry.moodKey || '');
-          return {
-            date,
-            displayDate: formatFullDate(date),
-            moodImage: mood ? mood.image : '/assets/moods/calm.png',
-            moodKey: entry.moodKey || '',
-            preview: getPreview(entry.content || ''),
-            content: entry.content || '',
-            timestamp: entry.timestamp,
-          };
-        });
-
-      this.setData({ allEntries: list });
+    this.setData({ userId });
+  
+    // ✅ 第一步：优先读取本地缓存，立即渲染
+    const cached = loadDiaryFromCache();
+    if (cached) {
+      const list = this.buildDiaryList(cached);
+      this.setData({ allEntries: list, loading: false });
       this.applyFilter();
-    } catch (e) {
-      wx.showToast({ title: '加载失败', icon: 'none' });
-    } finally {
-      wx.hideLoading();
-      this.setData({ loading: false });
+    }
+  
+    // ✅ 第二步：缓存过期才请求云端
+    if (isDiaryCacheExpired()) {
+      if (!cached) {
+        this.setData({ loading: true });
+        wx.showLoading({ title: '加载中...' });
+      }
+  
+      try {
+        const entries = await loadDiaryFromCloud(userId);
+        const list = this.buildDiaryList(entries);
+        this.setData({ allEntries: list });
+        this.applyFilter();
+      } catch (e) {
+        wx.showToast({ title: '加载失败', icon: 'none' });
+      } finally {
+        wx.hideLoading();
+        this.setData({ loading: false });
+      }
     }
   },
 
@@ -193,4 +197,23 @@ Page({
       url: `/pages/diary/diary-edit?date=${todayKey}&isNew=true`,
     });
   },
+
+  // ✅ 新增：抽取列表构建逻辑为独立函数，避免重复代码
+  buildDiaryList(entries: Record<string, any>): DiaryItem[] {
+    return Object.entries(entries)
+      .sort(([, a], [, b]) => (b as any).timestamp - (a as any).timestamp)
+      .map(([date, entry]: [string, any]) => {
+        const mood = getMoodByKey(entry.moodKey || '');
+        return {
+          date,
+          displayDate: formatFullDate(date),
+          moodImage: mood ? mood.image : '/assets/moods/calm.png',
+          moodKey: entry.moodKey || '',
+          preview: getPreview(entry.content || ''),
+          content: entry.content || '',
+          timestamp: entry.timestamp,
+        };
+      });
+  },
+
 });

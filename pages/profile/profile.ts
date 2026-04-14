@@ -5,7 +5,14 @@
 
 import { isMember } from '../../constants/membership';
 import { getOpenId } from '../../utils/encryption';
-import { loadMoodFromCloud, loadDiaryFromCloud } from '../../utils/cloudDB';
+import {
+  loadMoodFromCloud,
+  loadDiaryFromCloud,
+  loadMoodFromCache,      // ✅ 新增
+  loadDiaryFromCache,     // ✅ 新增
+  isMoodCacheExpired,     // ✅ 新增
+  isDiaryCacheExpired,    // ✅ 新增
+} from '../../utils/cloudDB';
 
 declare const wx: any;
 
@@ -108,31 +115,26 @@ Page({
       wx.redirectTo({ url: '/pages/index/index' });
       return;
     }
-
+  
     const userNickname  = wx.getStorageSync('userNickname')  || '匿名用户';
     const userAvatarUrl = wx.getStorageSync('userAvatarUrl') || '';
     const joinTimestamp = wx.getStorageSync('joinTimestamp') || Date.now();
-
-    // 首次使用时记录加入时间
+  
     if (!wx.getStorageSync('joinTimestamp')) {
       wx.setStorageSync('joinTimestamp', Date.now());
     }
-
-    wx.showLoading({ title: '加载中...' });
-
-    try {
-      const [moodEntries, diaryEntries] = await Promise.all([
-        loadMoodFromCloud(userId),
-        loadDiaryFromCloud(userId),
-      ]);
-
-      const totalCheckin = Object.keys(moodEntries).length;
-      const totalDiary   = Object.keys(diaryEntries).length;
-      const streak       = computeStreak(moodEntries);
+  
+    // ✅ 第一步：优先读取本地缓存，立即渲染统计数据
+    const cachedMood  = loadMoodFromCache();
+    const cachedDiary = loadDiaryFromCache();
+  
+    if (cachedMood && cachedDiary) {
+      const totalCheckin = Object.keys(cachedMood).length;
+      const totalDiary   = Object.keys(cachedDiary).length;
+      const streak       = computeStreak(cachedMood);
       const joinDays     = getJoinDays(joinTimestamp);
       const badges       = computeBadges(totalCheckin, totalDiary, streak);
-      const member       = isMember();
-
+  
       this.setData({
         ready: true,
         userNickname,
@@ -142,12 +144,45 @@ Page({
         totalDiary,
         streak,
         badges,
-        isMember: member,
+        isMember: isMember(),
       });
-    } catch (e) {
-      this.setData({ ready: true });
-    } finally {
-      wx.hideLoading();
+    }
+  
+    // ✅ 第二步：任一缓存过期才请求云端
+    const moodExpired  = isMoodCacheExpired();
+    const diaryExpired = isDiaryCacheExpired();
+  
+    if (moodExpired || diaryExpired) {
+      if (!cachedMood || !cachedDiary) wx.showLoading({ title: '加载中...' });
+  
+      try {
+        const [moodEntries, diaryEntries] = await Promise.all([
+          moodExpired  ? loadMoodFromCloud(userId)  : Promise.resolve(cachedMood!),
+          diaryExpired ? loadDiaryFromCloud(userId) : Promise.resolve(cachedDiary!),
+        ]);
+  
+        const totalCheckin = Object.keys(moodEntries).length;
+        const totalDiary   = Object.keys(diaryEntries).length;
+        const streak       = computeStreak(moodEntries);
+        const joinDays     = getJoinDays(joinTimestamp);
+        const badges       = computeBadges(totalCheckin, totalDiary, streak);
+  
+        this.setData({
+          ready: true,
+          userNickname,
+          userAvatarUrl,
+          joinDays,
+          totalCheckin,
+          totalDiary,
+          streak,
+          badges,
+          isMember: isMember(),
+        });
+      } catch (e) {
+        this.setData({ ready: true });
+      } finally {
+        wx.hideLoading();
+      }
     }
   },
 
