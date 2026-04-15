@@ -75,7 +75,6 @@ function sendSubscribeMsg(accessToken, openid, today) {
 exports.main = async (event, context) => {
   const today = getTodayKey();
 
-  // 从云函数环境变量读取（在云开发控制台 → 云函数 → Version and Config 设置）
   const APP_ID = process.env.APP_ID;
   const APP_SECRET = process.env.APP_SECRET;
 
@@ -83,7 +82,6 @@ exports.main = async (event, context) => {
     return { success: false, error: 'APP_ID 或 APP_SECRET 未配置' };
   }
 
-  // 获取 access_token
   let accessToken;
   try {
     accessToken = await getAccessToken(APP_ID, APP_SECRET);
@@ -112,25 +110,36 @@ exports.main = async (event, context) => {
       const result = await sendSubscribeMsg(accessToken, user.openid, today);
 
       if (result.errcode === 0) {
-        // 发送成功：次数 -1，更新最后发送日期
+        // ✅ 根据 remainingCount 决定更新方式
+        let newCount;
+        if (user.remainingCount > 7) {
+          newCount = 7; // 超过7：收敛到7
+        } else {
+          newCount = user.remainingCount - 1; // <=7：正常-1
+        }
+
         await db.collection(COLLECTION)
           .doc(user._id)
           .update({
             data: {
-              remainingCount: _.inc(-1),
+              remainingCount: newCount,
               lastSentDate: today,
             }
           });
         sentCount++;
+
       } else if (result.errcode === 43101) {
-        // 用户已取消订阅，清零次数，停止继续推送
+        // 用户已取消订阅，清零次数
         await db.collection(COLLECTION)
           .doc(user._id)
-          .update({ data: { remainingCount: 0 } });
+          .update({
+            data: { remainingCount: 0 }
+          });
         errors.push({ openid: user.openid, errCode: result.errcode, errMsg: result.errmsg });
       } else {
         errors.push({ openid: user.openid, errCode: result.errcode, errMsg: result.errmsg });
       }
+
     } catch (err) {
       errors.push({ openid: user.openid, error: err.message });
     }
@@ -139,7 +148,9 @@ exports.main = async (event, context) => {
   return { success: true, sent: sentCount, errors };
 };
 
+// ✅ 修复：使用北京时间 UTC+8，避免云函数 UTC+0 导致日期判断错误
 function getTodayKey() {
   const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const bjTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  return `${bjTime.getUTCFullYear()}-${String(bjTime.getUTCMonth() + 1).padStart(2, '0')}-${String(bjTime.getUTCDate()).padStart(2, '0')}`;
 }
