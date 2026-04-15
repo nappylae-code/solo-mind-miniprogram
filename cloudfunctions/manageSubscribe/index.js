@@ -16,20 +16,20 @@ exports.main = async (event, context) => {
       .where({ openid })
       .get();
 
-    const today = getTodayKey(); // ✅ 新增
+    const today = getTodayKey(); // ✅ 使用北京时间
 
     if (data.length > 0) {
       const record = data[0];
-    
+
       if (record.lastIncrementDate === today) {
         return { success: true, skipped: true, reason: '今日已累加' };
       }
-    
+
       await db.collection(COLLECTION)
         .doc(record._id)
         .update({
           data: {
-            remainingCount: _.inc(3),  // ✅ 改为 +3
+            remainingCount: _.inc(3),
             lastIncrementDate: today,
           }
         });
@@ -37,7 +37,7 @@ exports.main = async (event, context) => {
       await db.collection(COLLECTION).add({
         data: {
           openid,
-          remainingCount: 3,           // ✅ 改为 3
+          remainingCount: 3,
           lastSentDate: '',
           lastIncrementDate: today,
         }
@@ -58,7 +58,9 @@ exports.main = async (event, context) => {
   return { success: false, error: 'Unknown action' };
 };
 
+// ✅ 修复：使用北京时间 UTC+8，避免云函数 UTC+0 导致日期判断错误
 function getTodayKey() {
   const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const bjTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  return `${bjTime.getUTCFullYear()}-${String(bjTime.getUTCMonth() + 1).padStart(2, '0')}-${String(bjTime.getUTCDate()).padStart(2, '0')}`;
 }
