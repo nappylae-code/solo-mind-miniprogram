@@ -89,7 +89,7 @@ exports.main = async (event, context) => {
     return { success: false, error: 'access_token 获取失败' };
   }
 
-  // ✅ 【修改点1】查询条件：remainingCount > 0 且今天还没发过
+  // 查询所有有剩余次数、今天还没发过的用户
   const { data: users } = await db.collection(COLLECTION)
     .where({
       remainingCount: _.gt(0),
@@ -110,14 +110,12 @@ exports.main = async (event, context) => {
       const result = await sendSubscribeMsg(accessToken, user.openid, today);
 
       if (result.errcode === 0) {
-        // ✅ 【修改点2】根据 remainingCount 决定更新方式
+        // ✅ 根据 remainingCount 决定更新方式
         let newCount;
         if (user.remainingCount > 7) {
-          // 超过7：发送后直接设定为7（上限收敛）
-          newCount = 7;
+          newCount = 7; // 超过7：收敛到7
         } else {
-          // 0 < remainingCount <= 7：正常 -1
-          newCount = user.remainingCount - 1;
+          newCount = user.remainingCount - 1; // <=7：正常-1
         }
 
         await db.collection(COLLECTION)
@@ -150,7 +148,9 @@ exports.main = async (event, context) => {
   return { success: true, sent: sentCount, errors };
 };
 
+// ✅ 修复：使用北京时间 UTC+8，避免云函数 UTC+0 导致日期判断错误
 function getTodayKey() {
   const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const bjTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  return `${bjTime.getUTCFullYear()}-${String(bjTime.getUTCMonth() + 1).padStart(2, '0')}-${String(bjTime.getUTCDate()).padStart(2, '0')}`;
 }
