@@ -19,23 +19,7 @@
   </view>
 </view>
 
-<!-- 情绪筛选 Tab -->
-<scroll-view scroll-x class="mood-filter-bar">
-  <view class="mood-filter-inner">
-    <block wx:for="{{moodFilters}}" wx:key="key">
-      <view
-        class="mood-filter-item {{activeMoodFilter === item.key ? 'mood-filter-active' : ''}}"
-        bindtap="onMoodFilterTap"
-        data-key="{{item.key}}"
-      >
-        <!-- 全部用文字，其他用图片 -->
-        <text wx:if="{{item.key === 'ALL'}}" class="filter-all-text">📋</text>
-        <image wx:else class="filter-image" src="{{item.image}}" mode="aspectFit" />
-        <text class="filter-label">{{item.label}}</text>
-      </view>
-    </block>
-  </view>
-</scroll-view>
+<!-- ✅ 心情筛选 Tab 完全删除 -->
 
 <!-- 日记列表 -->
 <scroll-view scroll-y class="scroll-content">
@@ -43,7 +27,7 @@
   <block wx:if="{{monthGroups.length > 0}}">
     <block wx:for="{{monthGroups}}" wx:key="monthLabel">
       <view class="month-header">
-        <text class="month-label">📅 {{item.monthLabel}}</text>
+        <text class="month-label">📖 {{item.monthLabel}}</text>
       </view>
       <block wx:for="{{item.entries}}" wx:key="date" wx:for-item="entry">
         <view
@@ -51,6 +35,7 @@
           bindtap="onEntryTap"
           data-date="{{entry.date}}"
         >
+          <!-- ✅ entry-left（心情图标）完全删除 -->
           <view class="entry-middle">
             <text class="entry-date">{{entry.displayDate}}</text>
             <text class="entry-preview">{{entry.preview}}</text>
@@ -64,9 +49,9 @@
   </block>
 
   <view class="empty-state" wx:elif="{{!loading}}">
-    <text class="empty-emoji">📔</text>
+    <text class="empty-emoji">📓</text>
     <text class="empty-text">还没有日记</text>
-    <text class="empty-sub">点击右下角按钮开始写第一篇</text>
+    <text class="empty-sub">点击右下角按钮写下今天</text>
   </view>
 
   <view class="bottom-spacer"></view>

@@ -162,6 +162,7 @@ export async function loadMoodFromCloud(
 // ============================================
 // DIARY — Save
 // 加密 content 后存入 diaryEntries
+// ✅ 不再写入 moodKey 字段
 // ============================================
 export async function saveDiaryToCloud(
   entry: CloudDiaryEntry
@@ -170,7 +171,6 @@ export async function saveDiaryToCloud(
     const db = wx.cloud.database();
     const encryptedContent = entry.content ? encryptField(entry.content) : '';
 
-    // ✅ 查询和存储都用哈希后的 userId
     const hashedUserId = hashUserId(entry.userId);
 
     const { data } = await db
@@ -185,18 +185,18 @@ export async function saveDiaryToCloud(
         .update({
           data: {
             encryptedContent: encryptedContent,
-            moodKey: entry.moodKey || '',
             timestamp: entry.timestamp,
+            moodKey: db.command.remove(), // ✅ 更新时主动删除旧字段
           },
         });
     } else {
       await db.collection(DIARY_COLLECTION).add({
         data: {
-          userId: hashedUserId,  // ✅ 存哈希值
+          userId: hashedUserId,
           date: entry.date,
           encryptedContent: encryptedContent,
-          moodKey: entry.moodKey || '',
           timestamp: entry.timestamp,
+          // ✅ 新增时完全不写 moodKey 字段
         },
       });
     }
@@ -285,6 +285,10 @@ function _updateMoodCache(entry: CloudMoodEntry): void {
   } catch {}
 }
 
+// ============================================
+// 本地缓存辅助函数
+// ✅ 不再缓存 moodKey
+// ============================================
 function _updateDiaryCache(entry: CloudDiaryEntry): void {
   try {
     const cached = wx.getStorageSync(DIARY_CACHE_KEY);
@@ -292,7 +296,7 @@ function _updateDiaryCache(entry: CloudDiaryEntry): void {
     entries[entry.date] = {
       timestamp: entry.timestamp,
       content: entry.content || undefined,
-      moodKey: entry.moodKey || undefined,
+      // ✅ 不写 moodKey
     };
     wx.setStorageSync(DIARY_CACHE_KEY, JSON.stringify(entries));
   } catch {}
