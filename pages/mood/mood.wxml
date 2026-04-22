@@ -23,6 +23,11 @@
         </block>
       </view>
 
+      <!-- ✅ 昨日情绪对比提示 -->
+      <view wx:if="{{showComparison}}" class="comparison-bar">
+        <text class="comparison-text">{{comparisonText}}</text>
+      </view>
+
       <!-- 备注输入框 -->
       <textarea
         class="note-input"

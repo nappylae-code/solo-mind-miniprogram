@@ -65,6 +65,26 @@ const MOOD_FEEDBACK: Record<string, { message: string; bgColor: string }> = {
   },
 };
 
+// ============================================
+// ✅ 情绪权重：用于与昨天对比（数值越高越正向）
+// ============================================
+const MOOD_SCORE: Record<string, number> = {
+  GREAT: 4,
+  HAPPY: 3,
+  CALM:  2,
+  SAD:   1,
+  ANGRY: 0,
+};
+
+// ============================================
+// ✅ 昨日对比提示语
+// ============================================
+const MOOD_COMPARISON: Record<'better' | 'worse' | 'same', string> = {
+  better: '比昨天开心了一点点 ☀️',
+  worse:  '今天有点难，没关系，记录下来就好 🌙',
+  same:   '和昨天一样的心情，平稳就是一种力量 🌿',
+};
+
 interface MoodEntry {
   timestamp: number;
   moodKey: string;
@@ -148,6 +168,10 @@ Page({
     feedbackEmoji: '',
     feedbackMessage: '',
     feedbackBgColor: '#F1F8E9',
+
+    // ✅ 新增：昨日对比
+    showComparison: false,
+    comparisonText: '',
   },
 
   onLoad() {
@@ -281,6 +305,45 @@ Page({
     } else {
       this.setData({ selectedMood: null, selectedMoodObj: null, note: '' });
     }
+    // ✅ 每次同步今日数据后，重新计算昨日对比
+    this.computeComparison();
+  },
+
+  // ============================================
+  // ✅ 计算昨日情绪对比
+  // ============================================
+  computeComparison() {
+    const { moodEntries } = this.data;
+
+    // 今天的key
+    const todayKey = getTodayKey();
+
+    // 昨天的key
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+    const todayEntry    = moodEntries[todayKey];
+    const yesterdayEntry = moodEntries[yesterdayKey];
+
+    // 今天或昨天任一没有记录 → 不显示
+    if (!todayEntry || !yesterdayEntry) {
+      this.setData({ showComparison: false, comparisonText: '' });
+      return;
+    }
+
+    const todayScore     = MOOD_SCORE[todayEntry.moodKey]     ?? -1;
+    const yesterdayScore = MOOD_SCORE[yesterdayEntry.moodKey] ?? -1;
+
+    let type: 'better' | 'worse' | 'same';
+    if (todayScore > yesterdayScore)      type = 'better';
+    else if (todayScore < yesterdayScore) type = 'worse';
+    else                                  type = 'same';
+
+    this.setData({
+      showComparison: true,
+      comparisonText: MOOD_COMPARISON[type],
+    });
   },
 
   onSelectMood(e: WechatMiniprogram.TouchEvent) {
@@ -339,6 +402,9 @@ Page({
       };
       this.setData({ moodEntries: updated });
       this.computeWeekData();
+      this.setData({ moodEntries: updated });
+      this.computeWeekData();
+      this.computeComparison(); // ✅ 保存后重新计算对比
 
       // ✅ 替换 showModal：显示温暖的全屏动效 overlay
       const moodObj = getMoodByKey(selectedMood);
