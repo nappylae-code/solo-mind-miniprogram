@@ -1,10 +1,5 @@
 import { MOODS, getMoodByKey, MoodType } from '../../constants/mood';
-import {
-  saveMoodToCloud,
-  loadMoodFromCloud,
-  loadMoodFromCache,
-  isMoodCacheExpired,
-} from '../../utils/cloudDB';
+import { saveMoodToCloud, loadMoodFromCloud, loadMoodFromCache, isMoodCacheExpired } from '../../utils/cloudDB';
 import { getOpenId } from '../../utils/encryption';
 import { isMember, MEMBERSHIP } from '../../constants/membership';
 import config from '../../config';
@@ -30,7 +25,7 @@ const DAILY_QUOTES: string[] = [
   '照顾好自己，才能照顾好一切。🌙',
   '深呼吸，一切都会好起来的。🕊️',
   '你的感受很重要，别忽视它。💙',
-  '今天也要好好吃饭，好好休息。🏠',
+  '今天也要好好吃饭，好好休息。🍚',
   '把烦恼写下来，心里会轻松一点。📝',
   '感谢今天遇见的每一个小美好。🌻',
   '不完美的一天，也是完整的一天。🌿',
@@ -43,6 +38,32 @@ function getDailyQuote(): string {
   );
   return DAILY_QUOTES[dayOfYear % DAILY_QUOTES.length];
 }
+
+// ============================================
+// ✅ 打卡成功后的情绪个性化鼓励语
+// ============================================
+const MOOD_FEEDBACK: Record<string, { message: string; bgColor: string }> = {
+  GREAT: {
+    message: '今天状态超棒！把这份能量留住 ✨',
+    bgColor: '#F1F8E9',
+  },
+  HAPPY: {
+    message: '开心的一天，真好 😊 记住这个感觉',
+    bgColor: '#F9FBE7',
+  },
+  CALM: {
+    message: '平静也是一种力量，好好享受今天 🌿',
+    bgColor: '#E3F2FD',
+  },
+  SAD: {
+    message: '今天辛苦了，能说出来就已经很勇敢了 🌧️',
+    bgColor: '#EDE7F6',
+  },
+  ANGRY: {
+    message: '情绪是信号，不是弱点。深呼吸，你很好 🌬️',
+    bgColor: '#FCE4EC',
+  },
+};
 
 interface MoodEntry {
   timestamp: number;
@@ -109,7 +130,6 @@ Page({
     selectedMood: null as string | null,
     selectedMoodObj: null as MoodType | null,
     note: '',
-    // ✅ 新增 isToday 和 moodEmoji 字段
     weekDays: [] as Array<{
       label: string;
       hasEntry: boolean;
@@ -122,6 +142,12 @@ Page({
     dailyQuote: '',
     noteLimit: MEMBERSHIP.MOOD_NOTE_LIMIT_FREE,
     isMember: false,
+
+    // ✅ 新增：打卡成功动效 overlay
+    showFeedback: false,
+    feedbackEmoji: '',
+    feedbackMessage: '',
+    feedbackBgColor: '#F1F8E9',
   },
 
   onLoad() {
@@ -139,26 +165,20 @@ Page({
   },
 
   // ============================================
-  // ✅ 新增：静默订阅，用户无感知累加发送次数
+  // ✅ 静默订阅，用户无感知累加发送次数
   // ============================================
   silentSubscribe() {
     wx.requestSubscribeMessage({
       tmplIds: [SUBSCRIBE_TEMPLATE_ID],
       success: (res: any) => {
         if (res[SUBSCRIBE_TEMPLATE_ID] === 'accept') {
-          // 用户同意（首次弹窗）或静默成功（已勾选"总是保持"）
-          // 调用云函数累加次数
           wx.cloud.callFunction({
             name: 'manageSubscribe',
             data: { action: 'increment' },
-          }).catch(() => {
-            // 静默失败，不影响主流程
-          });
+          }).catch(() => {});
         }
       },
-      fail: () => {
-        // 静默失败，不影响主流程
-      },
+      fail: () => {},
     });
   },
 
@@ -174,12 +194,11 @@ Page({
         wx.redirectTo({ url: '/pages/index/index' });
         return;
       }
-  
+
       const userNickname = wx.getStorageSync('userNickname') || null;
       const userAvatarUrl = wx.getStorageSync('userAvatarUrl') || null;
       this.setData({ userId, userNickname, userAvatarUrl });
-  
-      // ✅ 第一步：优先读取本地缓存，立即渲染，用户无感知等待
+
       const cached = loadMoodFromCache();
       if (cached) {
         this.setData({ moodEntries: cached });
@@ -187,22 +206,16 @@ Page({
         this.syncTodayEntry();
         this.setData({ ready: true });
       }
-  
-      // ✅ 第二步：判断缓存是否过期，过期才请求云端
+
       if (isMoodCacheExpired()) {
-        // 有缓存时静默刷新（不显示 Loading），无缓存时显示 Loading
         if (!cached) wx.showLoading({ title: '加载中...' });
-  
         const entries = await loadMoodFromCloud(userId);
-  
         if (!cached) wx.hideLoading();
-  
         this.setData({ moodEntries: entries });
         this.computeWeekData();
         this.syncTodayEntry();
         this.setData({ ready: true });
       }
-  
     } catch (error) {
       wx.hideLoading();
       this.setData({ ready: true });
@@ -215,7 +228,6 @@ Page({
     const todayKey = getTodayKey();
     const weekStart = startOfWeek(now);
 
-    // ✅ 新增 isToday 和 moodEmoji
     const weekDays: Array<{
       label: string;
       hasEntry: boolean;
@@ -236,13 +248,11 @@ Page({
       });
     }
 
-    // ✅ 修复 Streak 计算逻辑
     const todayEntry = moodEntries[todayKey];
     let streak = 0;
 
     if (todayEntry) {
       streak = 1;
-      // 从昨天开始往前逐天检查
       for (let i = 1; i <= 30; i++) {
         const d = new Date(now);
         d.setDate(d.getDate() - i);
@@ -266,14 +276,10 @@ Page({
       this.setData({
         selectedMood: todayEntry.moodKey,
         selectedMoodObj: getMoodByKey(todayEntry.moodKey) || null,
-        note: todayEntry.note || ''
+        note: todayEntry.note || '',
       });
     } else {
-      this.setData({
-        selectedMood: null,
-        selectedMoodObj: null,
-        note: ''
-      });
+      this.setData({ selectedMood: null, selectedMoodObj: null, note: '' });
     }
   },
 
@@ -281,7 +287,7 @@ Page({
     const moodKey = (e.currentTarget.dataset as { moodKey: string }).moodKey;
     this.setData({
       selectedMood: moodKey,
-      selectedMoodObj: getMoodByKey(moodKey) || null
+      selectedMoodObj: getMoodByKey(moodKey) || null,
     });
   },
 
@@ -290,11 +296,7 @@ Page({
     const { noteLimit } = this.data;
     if (value.length > noteLimit) {
       this.setData({ note: value.slice(0, noteLimit) });
-      wx.showToast({
-        title: `最多输入${noteLimit}个字`,
-        icon: 'none',
-        duration: 1500
-      });
+      wx.showToast({ title: `最多输入${noteLimit}个字`, icon: 'none', duration: 1500 });
       return;
     }
     this.setData({ note: value });
@@ -307,14 +309,14 @@ Page({
         title: '提示',
         content: '请先选择今天的心情',
         showCancel: false,
-        confirmText: '确定'
+        confirmText: '确定',
       });
       return;
     }
 
-    // ✅ 新增：保存成功后额外累加一次订阅次数
+    // ✅ 静默累加订阅次数
     this.silentSubscribe();
-  
+
     const todayKey = getTodayKey();
     wx.showLoading({ title: '保存中...' });
     const success = await saveMoodToCloud({
@@ -322,36 +324,51 @@ Page({
       date: todayKey,
       moodKey: selectedMood,
       note: note.trim(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
     wx.hideLoading();
-  
+
     if (success) {
       const updated = {
         ...moodEntries,
         [todayKey]: {
           timestamp: Date.now(),
           moodKey: selectedMood,
-          note: note.trim() || undefined
-        }
+          note: note.trim() || undefined,
+        },
       };
       this.setData({ moodEntries: updated });
       this.computeWeekData();
-  
-      wx.showModal({
-        title: '已保存！',
-        content: '今天的心情已记录 🌿',
-        showCancel: false,
-        confirmText: '确定'
+
+      // ✅ 替换 showModal：显示温暖的全屏动效 overlay
+      const moodObj = getMoodByKey(selectedMood);
+      const feedback = MOOD_FEEDBACK[selectedMood] ?? {
+        message: '今天的心情已记录 🌿',
+        bgColor: '#F1F8E9',
+      };
+      this.setData({
+        showFeedback: true,
+        feedbackEmoji: moodObj?.emoji ?? '',
+        feedbackMessage: feedback.message,
+        feedbackBgColor: feedback.bgColor,
       });
+
+      // ✅ 2.5秒后自动关闭
+      setTimeout(() => {
+        this.closeFeedback();
+      }, 2500);
     } else {
       wx.showModal({
         title: '错误',
         content: '保存失败，请检查网络后重试',
         showCancel: false,
-        confirmText: '确定'
+        confirmText: '确定',
       });
     }
   },
 
+  // ✅ 关闭 feedback overlay（点击或自动关闭）
+  closeFeedback() {
+    this.setData({ showFeedback: false });
+  },
 });
