@@ -271,3 +271,8 @@
   color: #616161;
   line-height: 1.6;
 }
+
+/* ===== 周视图格子点击态 ===== */
+.week-day:active {
+  opacity: 0.6;
+}

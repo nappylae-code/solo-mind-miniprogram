@@ -155,6 +155,8 @@ Page({
       hasEntry: boolean;
       isToday: boolean;
       moodEmoji: string;
+      dateKey: string;
+      hasDiary: boolean;
     }>,
     streak: 0,
     greeting: '',
@@ -251,14 +253,23 @@ Page({
     const now = new Date();
     const todayKey = getTodayKey();
     const weekStart = startOfWeek(now);
-
+  
+    // ✅ 读取日记缓存，判断 hasDiary
+    let diaryEntries: Record<string, any> = {};
+    try {
+      const cached = wx.getStorageSync('diaryEntriesCache');
+      if (cached) diaryEntries = JSON.parse(cached);
+    } catch {}
+  
     const weekDays: Array<{
       label: string;
       hasEntry: boolean;
       isToday: boolean;
       moodEmoji: string;
+      dateKey: string;
+      hasDiary: boolean;
     }> = [];
-
+  
     for (let i = 0; i < 7; i++) {
       const d = new Date(weekStart);
       d.setDate(d.getDate() + i);
@@ -269,12 +280,14 @@ Page({
         hasEntry: !!entry,
         isToday: key === todayKey,
         moodEmoji: getMoodEmoji(entry?.moodKey),
+        dateKey: key,               // ✅ 新增
+        hasDiary: !!diaryEntries[key], // ✅ 新增
       });
     }
-
+  
     const todayEntry = moodEntries[todayKey];
     let streak = 0;
-
+  
     if (todayEntry) {
       streak = 1;
       for (let i = 1; i <= 30; i++) {
@@ -288,7 +301,7 @@ Page({
         }
       }
     }
-
+  
     this.setData({ weekDays, streak });
   },
 
@@ -343,6 +356,61 @@ Page({
     this.setData({
       showComparison: true,
       comparisonText: MOOD_COMPARISON[type],
+    });
+  },
+
+  // ============================================
+  // ✅ 周视图格子点击处理
+  // ============================================
+  onWeekDayTap(e: WechatMiniprogram.TouchEvent) {
+    const { dateKey, hasEntry, hasDiary } = e.currentTarget.dataset as {
+      dateKey: string;
+      hasEntry: boolean;
+      hasDiary: boolean;
+    };
+
+    // 无打卡记录 → 不响应
+    if (!hasEntry) return;
+
+    // 有日记 → 直接跳转日记详情
+    if (hasDiary) {
+      wx.navigateTo({
+        url: `/pages/diary/diary-detail?date=${dateKey}`,
+      });
+      return;
+    }
+
+    // 只有打卡，无日记：判断是今天或昨天才引导
+    const todayKey = getTodayKey();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+    if (dateKey !== todayKey && dateKey !== yesterdayKey) {
+      // 前天以前 → 不响应
+      return;
+    }
+
+    // 今天或昨天，只有打卡无日记 → 方案B：温暖 Modal 引导
+    const dateLabel = dateKey === todayKey ? '今天' : '昨天';
+    const { moodEntries } = this.data;
+    const entry = moodEntries[dateKey];
+    const moodObj = getMoodByKey(entry?.moodKey || '');
+    const moodLabel = moodObj ? moodObj.label : '';
+    const moodEmoji = moodObj ? moodObj.emoji : '';
+
+    wx.showModal({
+      title: `${dateLabel}的心情 ${moodEmoji}`,
+      content: `那天你记录了「${moodLabel}」，要不要写几句话，把这一天留下来？`,
+      confirmText: '写日记',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          wx.navigateTo({
+            url: `/pages/diary/diary-edit?date=${dateKey}&isNew=true`,
+          });
+        }
+      },
     });
   },
 
