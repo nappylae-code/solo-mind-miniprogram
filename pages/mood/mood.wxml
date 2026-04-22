@@ -54,11 +54,16 @@
       <!-- 7天格子 -->
       <view class="week-days">
         <block wx:for="{{weekDays}}" wx:key="index">
-          <view class="week-day">
+          <view
+            class="week-day"
+            bindtap="onWeekDayTap"
+            data-date-key="{{item.dateKey}}"
+            data-has-entry="{{item.hasEntry}}"
+            data-has-diary="{{item.hasDiary}}"
+          >
             <text class="week-day-label {{item.isToday ? 'week-day-label-today' : ''}}">
               {{item.label}}
             </text>
-            <!-- 已打卡：显示 emoji；今天未打卡：显示圆点；其他未打卡：显示灰色格子 -->
             <view class="week-day-cell {{item.hasEntry ? 'cell-done' : (item.isToday ? 'cell-today' : 'cell-empty')}}">
               <text wx:if="{{item.hasEntry}}" class="week-day-emoji">{{item.moodEmoji}}</text>
               <text wx:elif="{{item.isToday}}" class="week-day-dot">·</text>
