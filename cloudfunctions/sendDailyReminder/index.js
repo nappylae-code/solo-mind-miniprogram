@@ -5,7 +5,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const COLLECTION = 'subscribeRecords';
 const _ = db.command;
-const TEMPLATE_ID = 'SaSxE7UpdBSFTE2rI2Jgt4Ujmzz5miL_FuOP3hx0gqw';
+const TEMPLATE_ID = process.env.SUBSCRIBE_TEMPLATE_ID;
 
 // 通过 AppID + AppSecret 获取 access_token
 function getAccessToken(appId, appSecret) {
