@@ -256,3 +256,18 @@
   color: #9E9E9E;
   display: block;
 }
+
+/* ===== 昨日情绪对比提示 ===== */
+.comparison-bar {
+  background-color: #F9F9F9;
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+  margin-bottom: 20rpx;
+  border-left: 6rpx solid #A5D6A7;
+}
+
+.comparison-text {
+  font-size: 26rpx;
+  color: #616161;
+  line-height: 1.6;
+}
