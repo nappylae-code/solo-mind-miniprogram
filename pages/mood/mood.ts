@@ -402,8 +402,6 @@ Page({
       };
       this.setData({ moodEntries: updated });
       this.computeWeekData();
-      this.setData({ moodEntries: updated });
-      this.computeWeekData();
       this.computeComparison(); // ✅ 保存后重新计算对比
 
       // ✅ 替换 showModal：显示温暖的全屏动效 overlay
