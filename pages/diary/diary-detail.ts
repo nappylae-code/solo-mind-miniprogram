@@ -1,4 +1,4 @@
-import { loadDiaryFromCloud, deleteDiaryFromCloud } from '../../utils/cloudDB';
+import { loadDiaryFromCloud, deleteDiaryFromCloud, loadMoodFromCache } from '../../utils/cloudDB';
 import { getOpenId } from '../../utils/encryption';
 import { getMoodByKey } from '../../constants/mood';
 
@@ -35,18 +35,26 @@ Page({
   async loadEntry(date: string) {
     const userId = getOpenId();
     if (!userId) return;
-
+  
     wx.showLoading({ title: '加载中...' });
     try {
-      const entries = await loadDiaryFromCloud(userId);
+      // ✅ 同时加载日记和打卡数据
+      const [entries, moodCache] = await Promise.all([
+        loadDiaryFromCloud(userId),
+        Promise.resolve(loadMoodFromCache()),  // 先用缓存，快速
+      ]);
+  
       const entry = entries[date];
       if (!entry) {
         wx.showToast({ title: '日记不存在', icon: 'none' });
         wx.navigateBack();
         return;
       }
-
-      const mood = getMoodByKey(entry.moodKey || '');
+  
+      // ✅ 心情从 moodEntries 读取，不再从 diaryEntries 读取
+      const moodEntry = moodCache ? moodCache[date] : null;
+      const mood = getMoodByKey(moodEntry?.moodKey || '');
+  
       this.setData({
         displayDate: formatDetailDate(date, entry.timestamp),
         content: entry.content || '',

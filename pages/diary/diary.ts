@@ -37,11 +37,10 @@ function getPreview(content: string): string {
     : content;
 }
 
+// DiaryItem interface 移除 moodImage / moodKey
 interface DiaryItem {
   date: string;
   displayDate: string;
-  moodImage: string;
-  moodKey: string;
   preview: string;
   content: string;
   timestamp: number;
@@ -202,18 +201,13 @@ Page({
   buildDiaryList(entries: Record<string, any>): DiaryItem[] {
     return Object.entries(entries)
       .sort(([, a], [, b]) => (b as any).timestamp - (a as any).timestamp)
-      .map(([date, entry]: [string, any]) => {
-        const mood = getMoodByKey(entry.moodKey || '');
-        return {
-          date,
-          displayDate: formatFullDate(date),
-          moodImage: mood ? mood.image : '/assets/moods/calm.png',
-          moodKey: entry.moodKey || '',
-          preview: getPreview(entry.content || ''),
-          content: entry.content || '',
-          timestamp: entry.timestamp,
-        };
-      });
+      .map(([date, entry]: [string, any]) => ({
+        date,
+        displayDate: formatFullDate(date),
+        preview: getPreview(entry.content || ''),
+        content: entry.content || '',
+        timestamp: entry.timestamp,
+      }));
   },
 
 });

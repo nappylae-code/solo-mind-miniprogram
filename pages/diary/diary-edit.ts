@@ -1,4 +1,4 @@
-import { saveDiaryToCloud, loadDiaryFromCloud, CloudDiaryEntry } from '../../utils/cloudDB';
+import { saveDiaryToCloud, loadDiaryFromCloud, CloudDiaryEntry, saveMoodToCloud, loadMoodFromCache } from '../../utils/cloudDB';
 import { getOpenId } from '../../utils/encryption';
 import { MOODS, getMoodByKey, MoodType } from '../../constants/mood';
 import { isMember, MEMBERSHIP } from '../../constants/membership';
@@ -16,6 +16,9 @@ Page({
     MOODS: [] as MoodType[],
     selectedMoodKey: '',
     selectedMoodObj: null as MoodType | null,
+
+    // ✅ 新增：当天是否已在 mood 页面打卡
+    alreadyCheckedIn: false,
   },
 
   onLoad(options: { date?: string; isNew?: string }) {
@@ -40,26 +43,32 @@ Page({
     const userId = getOpenId();
     if (!userId) return;
 
+    // ✅ 第一步：检查当天是否已在 mood 页面打卡（读缓存，快速）
+    const moodCache = loadMoodFromCache();
+    const moodEntry = moodCache ? moodCache[date] : null;
+    const alreadyCheckedIn = !!moodEntry;
+
+    this.setData({ alreadyCheckedIn });
+
+    // ✅ 第二步：加载已有日记内容
     try {
       const entries = await loadDiaryFromCloud(userId);
       const entry = entries[date];
       if (entry) {
-        const mood = getMoodByKey(entry.moodKey || '');
         this.setData({
           content: entry.content || '',
           charCount: (entry.content || '').length,
-          selectedMoodKey: entry.moodKey || '',
-          selectedMoodObj: mood || null,
         });
       }
     } catch (e) {
       // 静默失败
     }
+
+    // ✅ 第三步：如果未打卡，不预填心情（让用户自己选）
+    // 如果已打卡，心情选择器已隐藏，无需处理
   },
 
   onMoodSelect(e: WechatMiniprogram.TouchEvent) {
-    // MoodCard 通过 triggerEvent('onpress') 触发
-    // moodKey 从 currentTarget.dataset 取
     const key = (e.currentTarget.dataset as { key: string }).key;
     const mood = getMoodByKey(key);
     this.setData({
@@ -80,7 +89,7 @@ Page({
   },
 
   async onSave() {
-    const { date, content, saving, selectedMoodKey } = this.data;
+    const { date, content, saving, selectedMoodKey, alreadyCheckedIn } = this.data;
     if (saving) return;
 
     if (!content.trim()) {
@@ -88,8 +97,8 @@ Page({
       return;
     }
 
-    // ✅ 修复：心情为必填项，与 mood 页面保持一致
-    if (!selectedMoodKey) {
+    // ✅ 未打卡时，心情为必填
+    if (!alreadyCheckedIn && !selectedMoodKey) {
       wx.showModal({
         title: '提示',
         content: '请先选择今天的心情',
@@ -106,29 +115,38 @@ Page({
     wx.showLoading({ title: '保存中...' });
 
     try {
-      const success = await saveDiaryToCloud({
+      // ✅ 第一步：保存日记内容（不再存 moodKey 到 diaryEntries）
+      const diarySuccess = await saveDiaryToCloud({
         userId,
         date,
         content: content.trim(),
-        moodKey: selectedMoodKey,
+        moodKey: '',  // ✅ 日记不再存心情
         timestamp: Date.now(),
       } as CloudDiaryEntry);
 
+      // ✅ 第二步：未打卡时，同时将心情存入 moodEntries
+      if (!alreadyCheckedIn && selectedMoodKey) {
+        await saveMoodToCloud({
+          userId,
+          date,
+          moodKey: selectedMoodKey,
+          note: '',
+          timestamp: Date.now(),
+        });
+      }
+
       wx.hideLoading();
 
-      if (success) {
+      if (diarySuccess) {
         wx.showToast({ title: '已保存 ✓', icon: 'none', duration: 1500 });
 
-        // ✅ 方案B：通过 EventChannel 把最新数据传回 detail 页
+        // 回传数据给上一页（diary-detail）
         const pages = getCurrentPages();
-        const prevPage = pages[pages.length - 2]; // detail 页
+        const prevPage = pages[pages.length - 2];
         if (prevPage) {
-          const mood = getMoodByKey(selectedMoodKey);
           prevPage.setData({
             content: content.trim(),
-            moodImage: mood ? mood.image : '', 
-            moodLabel: mood ? mood.label : '',
-            moodColor: mood ? mood.color : '#9E9E9E',
+            // ✅ 心情相关字段不再从日记传回，detail 页自行从 moodEntries 读取
           });
         }
 

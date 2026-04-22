@@ -51,9 +51,6 @@
           bindtap="onEntryTap"
           data-date="{{entry.date}}"
         >
-          <view class="entry-left">
-            <image class="entry-mood-image" src="{{entry.moodImage}}" mode="aspectFit" />
-          </view>
           <view class="entry-middle">
             <text class="entry-date">{{entry.displayDate}}</text>
             <text class="entry-preview">{{entry.preview}}</text>
