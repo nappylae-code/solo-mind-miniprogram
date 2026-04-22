@@ -120,7 +120,6 @@ Page({
         userId,
         date,
         content: content.trim(),
-        moodKey: '',  // ✅ 日记不再存心情
         timestamp: Date.now(),
       } as CloudDiaryEntry);
 
