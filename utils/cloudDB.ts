@@ -41,7 +41,6 @@ export interface CloudDiaryEntry {
   userId: string;
   date: string;
   content: string;   // 明文输入，保存时加密
-  moodKey?: string;
   timestamp: number;
 }
 
@@ -162,6 +161,7 @@ export async function loadMoodFromCloud(
 // ============================================
 // DIARY — Save
 // 加密 content 后存入 diaryEntries
+// ✅ 不再写入 moodKey 字段
 // ============================================
 export async function saveDiaryToCloud(
   entry: CloudDiaryEntry
@@ -170,7 +170,6 @@ export async function saveDiaryToCloud(
     const db = wx.cloud.database();
     const encryptedContent = entry.content ? encryptField(entry.content) : '';
 
-    // ✅ 查询和存储都用哈希后的 userId
     const hashedUserId = hashUserId(entry.userId);
 
     const { data } = await db
@@ -185,18 +184,18 @@ export async function saveDiaryToCloud(
         .update({
           data: {
             encryptedContent: encryptedContent,
-            moodKey: entry.moodKey || '',
             timestamp: entry.timestamp,
+            moodKey: db.command.remove(), // ✅ 更新时主动删除旧字段
           },
         });
     } else {
       await db.collection(DIARY_COLLECTION).add({
         data: {
-          userId: hashedUserId,  // ✅ 存哈希值
+          userId: hashedUserId,
           date: entry.date,
           encryptedContent: encryptedContent,
-          moodKey: entry.moodKey || '',
           timestamp: entry.timestamp,
+          // ✅ 新增时完全不写 moodKey 字段
         },
       });
     }
@@ -215,7 +214,7 @@ export async function saveDiaryToCloud(
 // ============================================
 export async function loadDiaryFromCloud(
   userId: string
-): Promise<Record<string, { timestamp: number; content?: string; moodKey?: string }>> {
+  ): Promise<Record<string, { timestamp: number; content?: string }>> {
   try {
     const db = wx.cloud.database();
     const hashedUserId = hashUserId(userId);
@@ -243,7 +242,7 @@ export async function loadDiaryFromCloud(
       batchCount++;
     }
 
-    const entries: Record<string, { timestamp: number; content?: string; moodKey?: string }> = {};
+    const entries: Record<string, { timestamp: number; content?: string }> = {};
 
     for (const item of allData) {
       const content = item.encryptedContent
@@ -252,7 +251,6 @@ export async function loadDiaryFromCloud(
       entries[item.date] = {
         timestamp: item.timestamp,
         content: content || undefined,
-        moodKey: item.moodKey || undefined,
       };
     }
 
@@ -285,6 +283,10 @@ function _updateMoodCache(entry: CloudMoodEntry): void {
   } catch {}
 }
 
+// ============================================
+// 本地缓存辅助函数
+// ✅ 不再缓存 moodKey
+// ============================================
 function _updateDiaryCache(entry: CloudDiaryEntry): void {
   try {
     const cached = wx.getStorageSync(DIARY_CACHE_KEY);
@@ -292,7 +294,7 @@ function _updateDiaryCache(entry: CloudDiaryEntry): void {
     entries[entry.date] = {
       timestamp: entry.timestamp,
       content: entry.content || undefined,
-      moodKey: entry.moodKey || undefined,
+      // ✅ 不写 moodKey
     };
     wx.setStorageSync(DIARY_CACHE_KEY, JSON.stringify(entries));
   } catch {}
@@ -524,7 +526,7 @@ export function loadMoodFromCache(): Record<string, {
 
 // 从本地缓存读取 diary 数据（不请求云端）
 export function loadDiaryFromCache(): Record<string, {
-  timestamp: number; content?: string; moodKey?: string
+  timestamp: number; content?: string
 }> | null {
   try {
     const cached = wx.getStorageSync(DIARY_CACHE_KEY);

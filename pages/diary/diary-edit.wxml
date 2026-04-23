@@ -1,7 +1,7 @@
 <view class="container">
 
-<!-- 今天心情关联 -->
-<view class="mood-section">
+<!-- ✅ 心情选择：仅未打卡时显示 -->
+<view class="mood-section" wx:if="{{!alreadyCheckedIn}}">
   <text class="mood-section-title">今天心情：</text>
   <view class="mood-row">
     <block wx:for="{{MOODS}}" wx:key="key">

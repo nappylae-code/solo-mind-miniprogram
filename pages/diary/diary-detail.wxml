@@ -2,7 +2,11 @@
 
 <!-- 情绪标签 -->
 <view class="mood-section">
-  <view class="mood-badge" style="background-color: {{moodColor}}20; border-color: {{moodColor}};">
+  <view
+    class="mood-badge"
+    style="background-color: {{moodColor}}20; border-color: {{moodColor}};"
+    wx:if="{{moodLabel}}"
+  >
     <image class="mood-image" src="{{moodImage}}" mode="aspectFit" wx:if="{{moodImage}}" />
     <text class="mood-label" style="color: {{moodColor}};">{{moodLabel}}</text>
   </view>

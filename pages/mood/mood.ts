@@ -1,10 +1,5 @@
 import { MOODS, getMoodByKey, MoodType } from '../../constants/mood';
-import {
-  saveMoodToCloud,
-  loadMoodFromCloud,
-  loadMoodFromCache,
-  isMoodCacheExpired,
-} from '../../utils/cloudDB';
+import { saveMoodToCloud, loadMoodFromCloud, loadMoodFromCache, isMoodCacheExpired } from '../../utils/cloudDB';
 import { getOpenId } from '../../utils/encryption';
 import { isMember, MEMBERSHIP } from '../../constants/membership';
 import config from '../../config';
@@ -30,7 +25,7 @@ const DAILY_QUOTES: string[] = [
   '照顾好自己，才能照顾好一切。🌙',
   '深呼吸，一切都会好起来的。🕊️',
   '你的感受很重要，别忽视它。💙',
-  '今天也要好好吃饭，好好休息。🏠',
+  '今天也要好好吃饭，好好休息。🍚',
   '把烦恼写下来，心里会轻松一点。📝',
   '感谢今天遇见的每一个小美好。🌻',
   '不完美的一天，也是完整的一天。🌿',
@@ -43,6 +38,52 @@ function getDailyQuote(): string {
   );
   return DAILY_QUOTES[dayOfYear % DAILY_QUOTES.length];
 }
+
+// ============================================
+// ✅ 打卡成功后的情绪个性化鼓励语
+// ============================================
+const MOOD_FEEDBACK: Record<string, { message: string; bgColor: string }> = {
+  GREAT: {
+    message: '今天状态超棒！把这份能量留住 ✨',
+    bgColor: '#F1F8E9',
+  },
+  HAPPY: {
+    message: '开心的一天，真好 😊 记住这个感觉',
+    bgColor: '#F9FBE7',
+  },
+  CALM: {
+    message: '平静也是一种力量，好好享受今天 🌿',
+    bgColor: '#E3F2FD',
+  },
+  SAD: {
+    message: '今天辛苦了，能说出来就已经很勇敢了 🌧️',
+    bgColor: '#EDE7F6',
+  },
+  ANGRY: {
+    message: '情绪是信号，不是弱点。深呼吸，你很好 🌬️',
+    bgColor: '#FCE4EC',
+  },
+};
+
+// ============================================
+// ✅ 情绪权重：用于与昨天对比（数值越高越正向）
+// ============================================
+const MOOD_SCORE: Record<string, number> = {
+  GREAT: 4,
+  HAPPY: 3,
+  CALM:  2,
+  SAD:   1,
+  ANGRY: 0,
+};
+
+// ============================================
+// ✅ 昨日对比提示语
+// ============================================
+const MOOD_COMPARISON: Record<'better' | 'worse' | 'same', string> = {
+  better: '比昨天开心了一点点 ☀️',
+  worse:  '今天有点难，没关系，记录下来就好 🌙',
+  same:   '和昨天一样的心情，平稳就是一种力量 🌿',
+};
 
 interface MoodEntry {
   timestamp: number;
@@ -109,12 +150,13 @@ Page({
     selectedMood: null as string | null,
     selectedMoodObj: null as MoodType | null,
     note: '',
-    // ✅ 新增 isToday 和 moodEmoji 字段
     weekDays: [] as Array<{
       label: string;
       hasEntry: boolean;
       isToday: boolean;
       moodEmoji: string;
+      dateKey: string;
+      hasDiary: boolean;
     }>,
     streak: 0,
     greeting: '',
@@ -122,6 +164,16 @@ Page({
     dailyQuote: '',
     noteLimit: MEMBERSHIP.MOOD_NOTE_LIMIT_FREE,
     isMember: false,
+
+    // ✅ 新增：打卡成功动效 overlay
+    showFeedback: false,
+    feedbackEmoji: '',
+    feedbackMessage: '',
+    feedbackBgColor: '#F1F8E9',
+
+    // ✅ 新增：昨日对比
+    showComparison: false,
+    comparisonText: '',
   },
 
   onLoad() {
@@ -139,26 +191,20 @@ Page({
   },
 
   // ============================================
-  // ✅ 新增：静默订阅，用户无感知累加发送次数
+  // ✅ 静默订阅，用户无感知累加发送次数
   // ============================================
   silentSubscribe() {
     wx.requestSubscribeMessage({
       tmplIds: [SUBSCRIBE_TEMPLATE_ID],
       success: (res: any) => {
         if (res[SUBSCRIBE_TEMPLATE_ID] === 'accept') {
-          // 用户同意（首次弹窗）或静默成功（已勾选"总是保持"）
-          // 调用云函数累加次数
           wx.cloud.callFunction({
             name: 'manageSubscribe',
             data: { action: 'increment' },
-          }).catch(() => {
-            // 静默失败，不影响主流程
-          });
+          }).catch(() => {});
         }
       },
-      fail: () => {
-        // 静默失败，不影响主流程
-      },
+      fail: () => {},
     });
   },
 
@@ -174,12 +220,11 @@ Page({
         wx.redirectTo({ url: '/pages/index/index' });
         return;
       }
-  
+
       const userNickname = wx.getStorageSync('userNickname') || null;
       const userAvatarUrl = wx.getStorageSync('userAvatarUrl') || null;
       this.setData({ userId, userNickname, userAvatarUrl });
-  
-      // ✅ 第一步：优先读取本地缓存，立即渲染，用户无感知等待
+
       const cached = loadMoodFromCache();
       if (cached) {
         this.setData({ moodEntries: cached });
@@ -187,22 +232,16 @@ Page({
         this.syncTodayEntry();
         this.setData({ ready: true });
       }
-  
-      // ✅ 第二步：判断缓存是否过期，过期才请求云端
+
       if (isMoodCacheExpired()) {
-        // 有缓存时静默刷新（不显示 Loading），无缓存时显示 Loading
         if (!cached) wx.showLoading({ title: '加载中...' });
-  
         const entries = await loadMoodFromCloud(userId);
-  
         if (!cached) wx.hideLoading();
-  
         this.setData({ moodEntries: entries });
         this.computeWeekData();
         this.syncTodayEntry();
         this.setData({ ready: true });
       }
-  
     } catch (error) {
       wx.hideLoading();
       this.setData({ ready: true });
@@ -214,15 +253,23 @@ Page({
     const now = new Date();
     const todayKey = getTodayKey();
     const weekStart = startOfWeek(now);
-
-    // ✅ 新增 isToday 和 moodEmoji
+  
+    // ✅ 读取日记缓存，判断 hasDiary
+    let diaryEntries: Record<string, any> = {};
+    try {
+      const cached = wx.getStorageSync('diaryEntriesCache');
+      if (cached) diaryEntries = JSON.parse(cached);
+    } catch {}
+  
     const weekDays: Array<{
       label: string;
       hasEntry: boolean;
       isToday: boolean;
       moodEmoji: string;
+      dateKey: string;
+      hasDiary: boolean;
     }> = [];
-
+  
     for (let i = 0; i < 7; i++) {
       const d = new Date(weekStart);
       d.setDate(d.getDate() + i);
@@ -233,16 +280,16 @@ Page({
         hasEntry: !!entry,
         isToday: key === todayKey,
         moodEmoji: getMoodEmoji(entry?.moodKey),
+        dateKey: key,               // ✅ 新增
+        hasDiary: !!diaryEntries[key], // ✅ 新增
       });
     }
-
-    // ✅ 修复 Streak 计算逻辑
+  
     const todayEntry = moodEntries[todayKey];
     let streak = 0;
-
+  
     if (todayEntry) {
       streak = 1;
-      // 从昨天开始往前逐天检查
       for (let i = 1; i <= 30; i++) {
         const d = new Date(now);
         d.setDate(d.getDate() - i);
@@ -254,7 +301,7 @@ Page({
         }
       }
     }
-
+  
     this.setData({ weekDays, streak });
   },
 
@@ -266,22 +313,112 @@ Page({
       this.setData({
         selectedMood: todayEntry.moodKey,
         selectedMoodObj: getMoodByKey(todayEntry.moodKey) || null,
-        note: todayEntry.note || ''
+        note: todayEntry.note || '',
       });
     } else {
-      this.setData({
-        selectedMood: null,
-        selectedMoodObj: null,
-        note: ''
-      });
+      this.setData({ selectedMood: null, selectedMoodObj: null, note: '' });
     }
+    // ✅ 每次同步今日数据后，重新计算昨日对比
+    this.computeComparison();
+  },
+
+  // ============================================
+  // ✅ 计算昨日情绪对比
+  // ============================================
+  computeComparison() {
+    const { moodEntries } = this.data;
+
+    // 今天的key
+    const todayKey = getTodayKey();
+
+    // 昨天的key
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+    const todayEntry    = moodEntries[todayKey];
+    const yesterdayEntry = moodEntries[yesterdayKey];
+
+    // 今天或昨天任一没有记录 → 不显示
+    if (!todayEntry || !yesterdayEntry) {
+      this.setData({ showComparison: false, comparisonText: '' });
+      return;
+    }
+
+    const todayScore     = MOOD_SCORE[todayEntry.moodKey]     ?? -1;
+    const yesterdayScore = MOOD_SCORE[yesterdayEntry.moodKey] ?? -1;
+
+    let type: 'better' | 'worse' | 'same';
+    if (todayScore > yesterdayScore)      type = 'better';
+    else if (todayScore < yesterdayScore) type = 'worse';
+    else                                  type = 'same';
+
+    this.setData({
+      showComparison: true,
+      comparisonText: MOOD_COMPARISON[type],
+    });
+  },
+
+  // ============================================
+  // ✅ 周视图格子点击处理
+  // ============================================
+  onWeekDayTap(e: WechatMiniprogram.TouchEvent) {
+    const { dateKey, hasEntry, hasDiary } = e.currentTarget.dataset as {
+      dateKey: string;
+      hasEntry: boolean;
+      hasDiary: boolean;
+    };
+
+    // 无打卡记录 → 不响应
+    if (!hasEntry) return;
+
+    // 有日记 → 直接跳转日记详情
+    if (hasDiary) {
+      wx.navigateTo({
+        url: `/pages/diary/diary-detail?date=${dateKey}`,
+      });
+      return;
+    }
+
+    // 只有打卡，无日记：判断是今天或昨天才引导
+    const todayKey = getTodayKey();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+    if (dateKey !== todayKey && dateKey !== yesterdayKey) {
+      // 前天以前 → 不响应
+      return;
+    }
+
+    // 今天或昨天，只有打卡无日记 → 方案B：温暖 Modal 引导
+    const dateLabel = dateKey === todayKey ? '今天' : '昨天';
+    const { moodEntries } = this.data;
+    const entry = moodEntries[dateKey];
+    const moodObj = getMoodByKey(entry?.moodKey || '');
+    const moodLabel = moodObj ? moodObj.label : '';
+    const moodEmoji = moodObj ? moodObj.emoji : '';
+
+    wx.showModal({
+      title: `${dateLabel}的心情 ${moodEmoji}`,
+      content: `那天你记录了「${moodLabel}」，要不要写几句话，把这一天留下来？`,
+      confirmText: '写日记',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          wx.navigateTo({
+            url: `/pages/diary/diary-edit?date=${dateKey}&isNew=true`,
+          });
+        }
+      },
+    });
   },
 
   onSelectMood(e: WechatMiniprogram.TouchEvent) {
     const moodKey = (e.currentTarget.dataset as { moodKey: string }).moodKey;
     this.setData({
       selectedMood: moodKey,
-      selectedMoodObj: getMoodByKey(moodKey) || null
+      selectedMoodObj: getMoodByKey(moodKey) || null,
     });
   },
 
@@ -290,11 +427,7 @@ Page({
     const { noteLimit } = this.data;
     if (value.length > noteLimit) {
       this.setData({ note: value.slice(0, noteLimit) });
-      wx.showToast({
-        title: `最多输入${noteLimit}个字`,
-        icon: 'none',
-        duration: 1500
-      });
+      wx.showToast({ title: `最多输入${noteLimit}个字`, icon: 'none', duration: 1500 });
       return;
     }
     this.setData({ note: value });
@@ -307,14 +440,14 @@ Page({
         title: '提示',
         content: '请先选择今天的心情',
         showCancel: false,
-        confirmText: '确定'
+        confirmText: '确定',
       });
       return;
     }
 
-    // ✅ 新增：保存成功后额外累加一次订阅次数
+    // ✅ 静默累加订阅次数
     this.silentSubscribe();
-  
+
     const todayKey = getTodayKey();
     wx.showLoading({ title: '保存中...' });
     const success = await saveMoodToCloud({
@@ -322,36 +455,52 @@ Page({
       date: todayKey,
       moodKey: selectedMood,
       note: note.trim(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
     wx.hideLoading();
-  
+
     if (success) {
       const updated = {
         ...moodEntries,
         [todayKey]: {
           timestamp: Date.now(),
           moodKey: selectedMood,
-          note: note.trim() || undefined
-        }
+          note: note.trim() || undefined,
+        },
       };
       this.setData({ moodEntries: updated });
       this.computeWeekData();
-  
-      wx.showModal({
-        title: '已保存！',
-        content: '今天的心情已记录 🌿',
-        showCancel: false,
-        confirmText: '确定'
+      this.computeComparison(); // ✅ 保存后重新计算对比
+
+      // ✅ 替换 showModal：显示温暖的全屏动效 overlay
+      const moodObj = getMoodByKey(selectedMood);
+      const feedback = MOOD_FEEDBACK[selectedMood] ?? {
+        message: '今天的心情已记录 🌿',
+        bgColor: '#F1F8E9',
+      };
+      this.setData({
+        showFeedback: true,
+        feedbackEmoji: moodObj?.emoji ?? '',
+        feedbackMessage: feedback.message,
+        feedbackBgColor: feedback.bgColor,
       });
+
+      // ✅ 2.5秒后自动关闭
+      setTimeout(() => {
+        this.closeFeedback();
+      }, 2500);
     } else {
       wx.showModal({
         title: '错误',
         content: '保存失败，请检查网络后重试',
         showCancel: false,
-        confirmText: '确定'
+        confirmText: '确定',
       });
     }
   },
 
+  // ✅ 关闭 feedback overlay（点击或自动关闭）
+  closeFeedback() {
+    this.setData({ showFeedback: false });
+  },
 });

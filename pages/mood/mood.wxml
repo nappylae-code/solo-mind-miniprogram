@@ -1,17 +1,17 @@
 <view class="container">
   <scroll-view scroll-y class="scroll-content">
 
-    <!-- ① Header：问候语 + 日期 -->
+    <!-- ✅ Header：问候语 + 日期 -->
     <view class="header-section">
       <text class="greeting">{{greeting}}，{{userNickname || '朋友'}} 👋</text>
       <text class="date-string">{{dateString}}</text>
     </view>
 
-    <!-- ② 情绪打卡卡片 -->
+    <!-- 🌟 情绪打卡卡片 -->
     <view class="card mood-card">
       <text class="card-title">今天心情怎么样？</text>
 
-      <!-- 5种情绪选择 -->
+      <!-- 5种情绪选项 -->
       <view class="mood-row">
         <block wx:for="{{MOODS}}" wx:key="key">
           <MoodCard
@@ -23,10 +23,15 @@
         </block>
       </view>
 
+      <!-- ✅ 昨日情绪对比提示 -->
+      <view wx:if="{{showComparison}}" class="comparison-bar">
+        <text class="comparison-text">{{comparisonText}}</text>
+      </view>
+
       <!-- 备注输入框 -->
       <textarea
         class="note-input"
-        placeholder="写点什么...（选填）"
+        placeholder="写点什么...（可选）"
         placeholder-style="color: #BDBDBD;"
         value="{{note}}"
         bindinput="onNoteInput"
@@ -35,25 +40,30 @@
         auto-height
       />
 
-      <!-- 字数提示 -->
+      <!-- 字数计数 -->
       <text class="note-count">{{note.length}}/{{noteLimit}}</text>
 
       <!-- 保存按钮 -->
-      <button class="save-button" bindtap="handleSave">💾 记录今天心情</button>
+      <button class="save-button" bindtap="handleSave">🌿 记录今天心情</button>
     </view>
 
-    <!-- ③ 周历卡片（独立） -->
+    <!-- 📅 周历卡片（周一至周日） -->
     <view class="card week-card">
-      <text class="card-title">📅 本周心情</text>
+      <text class="card-title">📖 本周心情</text>
 
       <!-- 7天格子 -->
       <view class="week-days">
         <block wx:for="{{weekDays}}" wx:key="index">
-          <view class="week-day">
+          <view
+            class="week-day"
+            bindtap="onWeekDayTap"
+            data-date-key="{{item.dateKey}}"
+            data-has-entry="{{item.hasEntry}}"
+            data-has-diary="{{item.hasDiary}}"
+          >
             <text class="week-day-label {{item.isToday ? 'week-day-label-today' : ''}}">
               {{item.label}}
             </text>
-            <!-- 已打卡：显示 emoji；今天未打卡：显示高亮空格；其他未打卡：灰色空格 -->
             <view class="week-day-cell {{item.hasEntry ? 'cell-done' : (item.isToday ? 'cell-today' : 'cell-empty')}}">
               <text wx:if="{{item.hasEntry}}" class="week-day-emoji">{{item.moodEmoji}}</text>
               <text wx:elif="{{item.isToday}}" class="week-day-dot">·</text>
@@ -66,11 +76,28 @@
       <text class="streak">🔥 已连续打卡 {{streak}} 天</text>
     </view>
 
-    <!-- ④ 今日语录卡片 -->
+    <!-- 💬 每日语录卡片 -->
     <view class="card quote-card">
-      <text class="card-title">✨ 今日语录</text>
+      <text class="card-title">✨ 每日语录</text>
       <text class="quote-text">"{{dailyQuote}}"</text>
     </view>
 
   </scroll-view>
+
+  <!-- ✅ 打卡成功动效 Overlay -->
+  <view
+    class="feedback-overlay {{showFeedback ? 'feedback-overlay--visible' : ''}}"
+    style="background-color: {{feedbackBgColor}};"
+    bindtap="closeFeedback"
+  >
+    <view class="feedback-content">
+      <text class="feedback-emoji {{showFeedback ? 'feedback-emoji--bounce' : ''}}">
+        {{feedbackEmoji}}
+      </text>
+      <text class="feedback-title">已记录 ✓</text>
+      <text class="feedback-message">{{feedbackMessage}}</text>
+      <text class="feedback-hint">轻触任意处关闭</text>
+    </view>
+  </view>
+
 </view>

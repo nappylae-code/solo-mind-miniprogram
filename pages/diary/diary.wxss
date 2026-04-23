@@ -39,48 +39,6 @@
   padding: 4rpx 8rpx;
 }
 
-/* ===== 情绪筛选 Tab（竖排：emoji + 文字）===== */
-.mood-filter-bar {
-  background-color: #F5F5F5;
-  white-space: nowrap;
-}
-
-.mood-filter-inner {
-  display: flex;
-  flex-direction: row;
-  padding: 8rpx 24rpx 16rpx;
-  gap: 12rpx;
-}
-
-.mood-filter-item {
-  display: inline-flex;
-  flex-direction: column;    /* ✅ 竖排 */
-  align-items: center;
-  padding: 12rpx 16rpx;
-  border-radius: 16rpx;
-  background-color: #EEEEEE;
-  flex-shrink: 0;
-  gap: 4rpx;
-  min-width: 80rpx;
-}
-
-.mood-filter-active {
-  background-color: #4CAF50;
-}
-
-.filter-emoji {
-  font-size: 32rpx;
-}
-
-.filter-label {
-  font-size: 20rpx;
-  color: #757575;
-}
-
-.mood-filter-active .filter-label {
-  color: #FFFFFF;
-}
-
 /* ===== 列表滚动区 ===== */
 .scroll-content {
   flex: 1;
@@ -108,18 +66,6 @@
   border-radius: 20rpx;
   padding: 24rpx;
   gap: 16rpx;
-}
-
-.entry-left {
-  width: 60rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.entry-emoji {
-  font-size: 44rpx;
 }
 
 .entry-middle {
@@ -199,20 +145,4 @@
 
 .fab-icon {
   font-size: 40rpx;
-}
-
-/* 情绪筛选图片 */
-.filter-image {
-  width: 40rpx;
-  height: 40rpx;
-}
-
-.filter-all-text {
-  font-size: 32rpx;
-}
-
-/* 列表项情绪图片 */
-.entry-mood-image {
-  width: 56rpx;
-  height: 56rpx;
 }
