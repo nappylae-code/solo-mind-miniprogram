@@ -39,6 +39,26 @@
   padding: 4rpx 8rpx;
 }
 
+/* ===== 统计摘要栏 ===== */
+.summary-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 4rpx 24rpx 16rpx;
+}
+
+.summary-text {
+  font-size: 24rpx;
+  color: #9E9E9E;
+}
+
+.summary-dot {
+  font-size: 24rpx;
+  color: #BDBDBD;
+}
+
 /* ===== 列表滚动区 ===== */
 .scroll-content {
   flex: 1;

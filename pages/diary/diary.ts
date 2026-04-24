@@ -36,6 +36,9 @@ function getPreview(content: string): string {
     : content;
 }
 
+// ============================================
+// interfaces
+// ============================================
 // ✅ moodImage / moodKey 完全移除
 interface DiaryItem {
   date: string;
@@ -50,6 +53,37 @@ interface MonthGroup {
   entries: DiaryItem[];
 }
 
+interface SummaryData {
+  totalCount: number;  // 共 X 篇日记
+  totalDays: number;   // 坚持了 X 天（最早日记到今天的跨度）
+  hasData: boolean;    // 是否有日记，false 时不渲染摘要栏
+}
+
+// ============================================
+// 统计摘要计算
+// 纯计算函数，零 Cloud / Storage 访问
+// ============================================
+function calcSummary(entries: DiaryItem[]): SummaryData {
+  const totalCount = entries.length;
+
+  if (totalCount === 0) {
+    return { totalCount: 0, totalDays: 0, hasData: false };
+  }
+
+  // 取最早日记日期，计算到今天的自然天数跨度
+  const earliest = entries.map(e => e.date).sort()[0];
+  const parts = earliest.split('-');
+  const earliestDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const totalDays = Math.floor((today.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+  return { totalCount, totalDays, hasData: true };
+}
+
+// ============================================
+// Page
+// ============================================
 Page({
   data: {
     userId: null as string | null,
@@ -58,6 +92,11 @@ Page({
     monthGroups: [] as MonthGroup[],
     searchKeyword: '',
     // ✅ activeMoodFilter / moodFilters 完全移除
+    summary: {
+      totalCount: 0,
+      totalDays: 0,
+      hasData: false,
+    } as SummaryData,
   },
 
   onLoad() {},
@@ -78,7 +117,8 @@ Page({
     const cached = loadDiaryFromCache();
     if (cached) {
       const list = this.buildDiaryList(cached);
-      this.setData({ allEntries: list, loading: false });
+      const summary = calcSummary(list);
+      this.setData({ allEntries: list, summary, loading: false });
       this.applyFilter();
     }
 
@@ -92,7 +132,8 @@ Page({
       try {
         const entries = await loadDiaryFromCloud(userId);
         const list = this.buildDiaryList(entries);
-        this.setData({ allEntries: list });
+        const summary = calcSummary(list);
+        this.setData({ allEntries: list, summary });
         this.applyFilter();
       } catch (e) {
         wx.showToast({ title: '加载失败', icon: 'none' });
