@@ -124,23 +124,25 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 120rpx;
-  gap: 16rpx;
+  padding-top: 160rpx;
+  gap: 24rpx;
 }
 
 .empty-emoji {
-  font-size: 80rpx;
+  font-size: 96rpx;
 }
 
 .empty-text {
-  font-size: 32rpx;
-  color: #757575;
+  font-size: 34rpx;
+  color: #616161;
   font-weight: 600;
 }
 
 .empty-sub {
   font-size: 26rpx;
-  color: #BDBDBD;
+  color: #9E9E9E;
+  text-align: center;
+  line-height: 1.8;
 }
 
 /* ===== 底部占位 ===== */

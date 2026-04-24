@@ -54,9 +54,9 @@
   </block>
 
   <view class="empty-state" wx:elif="{{!loading}}">
-    <text class="empty-emoji">📖</text>
-    <text class="empty-text">还没有日记</text>
-    <text class="empty-sub">点击右下角按钮写下今天的心情</text>
+    <text class="empty-emoji">🌱</text>
+    <text class="empty-text">今天，怎么样？</text>
+    <text class="empty-sub">不用写很多，一句话也好。\n把今天的感受留下来，只给自己看。</text>
   </view>
 
   <view class="bottom-spacer"></view>
