@@ -23,7 +23,7 @@
 <view class="summary-bar" wx:if="{{summary.hasData}}">
   <text class="summary-text">共 {{summary.totalCount}} 篇日记</text>
   <text class="summary-dot">·</text>
-  <text class="summary-text">坚持了 {{summary.totalDays}} 天</text>
+  <text class="summary-text">连续记录 {{summary.streakDays}} 天</text>
 </view>
 
 <!-- 日记列表 -->

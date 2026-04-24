@@ -37,6 +37,16 @@ function getPreview(content: string): string {
 }
 
 // ============================================
+// 日期工具：dateKey 往前推一天
+// ============================================
+function getPrevDateKey(dateKey: string): string {
+  const parts = dateKey.split('-');
+  const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// ============================================
 // interfaces
 // ============================================
 // ✅ moodImage / moodKey 完全移除
@@ -54,9 +64,9 @@ interface MonthGroup {
 }
 
 interface SummaryData {
-  totalCount: number;  // 共 X 篇日记
-  totalDays: number;   // 坚持了 X 天（最早日记到今天的跨度）
-  hasData: boolean;    // 是否有日记，false 时不渲染摘要栏
+  totalCount: number;    // 共 X 篇日记
+  streakDays: number;    // 连续记日记 X 天
+  hasData: boolean;      // 是否有日记，false 时不渲染摘要栏
 }
 
 // ============================================
@@ -67,18 +77,23 @@ function calcSummary(entries: DiaryItem[]): SummaryData {
   const totalCount = entries.length;
 
   if (totalCount === 0) {
-    return { totalCount: 0, totalDays: 0, hasData: false };
+    return { totalCount: 0, streakDays: 0, hasData: false };
   }
 
-  // 取最早日记日期，计算到今天的自然天数跨度
-  const earliest = entries.map(e => e.date).sort()[0];
-  const parts = earliest.split('-');
-  const earliestDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const totalDays = Math.floor((today.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  // 所有日期存入 Set，O(1) 查找
+  const dateSet = new Set(entries.map(e => e.date));
 
-  return { totalCount, totalDays, hasData: true };
+  // 从最近一篇日记的日期往前连续计数
+  const latestDate = entries.map(e => e.date).sort().reverse()[0];
+  let current = latestDate;
+  let streakDays = 0;
+
+  while (dateSet.has(current)) {
+    streakDays++;
+    current = getPrevDateKey(current);
+  }
+
+  return { totalCount, streakDays, hasData: true };
 }
 
 // ============================================
@@ -94,7 +109,7 @@ Page({
     // ✅ activeMoodFilter / moodFilters 完全移除
     summary: {
       totalCount: 0,
-      totalDays: 0,
+      streakDays: 0,
       hasData: false,
     } as SummaryData,
   },
