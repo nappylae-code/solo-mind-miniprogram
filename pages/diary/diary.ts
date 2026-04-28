@@ -120,6 +120,27 @@ Page({
     this.loadData();
   },
 
+  onPullDownRefresh() {
+    this.forceLoadFromCloud().finally(() => {
+      wx.stopPullDownRefresh();
+    });
+  },
+  
+  async forceLoadFromCloud() {
+    const userId = this.data.userId;
+    if (!userId) return;
+  
+    try {
+      const entries = await loadDiaryFromCloud(userId);
+      const list = this.buildDiaryList(entries);
+      const summary = calcSummary(list);
+      this.setData({ allEntries: list, summary });
+      this.applyFilter();
+    } catch (e) {
+      wx.showToast({ title: '刷新失败', icon: 'none' });
+    }
+  },
+
   async loadData() {
     const userId = getOpenId();
     if (!userId) {
