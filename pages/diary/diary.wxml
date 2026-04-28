@@ -19,7 +19,12 @@
   </view>
 </view>
 
-<!-- ✅ 心情筛选 Tab 完全删除 -->
+<!-- 统计摘要栏：无日记时自动隐藏 -->
+<view class="summary-bar" wx:if="{{summary.hasData}}">
+  <text class="summary-text">共 {{summary.totalCount}} 篇日记</text>
+  <text class="summary-dot">·</text>
+  <text class="summary-text">连续记录 {{summary.streakDays}} 天</text>
+</view>
 
 <!-- 日记列表 -->
 <scroll-view scroll-y class="scroll-content">
@@ -27,7 +32,7 @@
   <block wx:if="{{monthGroups.length > 0}}">
     <block wx:for="{{monthGroups}}" wx:key="monthLabel">
       <view class="month-header">
-        <text class="month-label">📖 {{item.monthLabel}}</text>
+        <text class="month-label">📅 {{item.monthLabel}}</text>
       </view>
       <block wx:for="{{item.entries}}" wx:key="date" wx:for-item="entry">
         <view
@@ -35,7 +40,7 @@
           bindtap="onEntryTap"
           data-date="{{entry.date}}"
         >
-          <!-- ✅ entry-left（心情图标）完全删除 -->
+          <!-- ✅ entry-left（情绪图标）已移除 -->
           <view class="entry-middle">
             <text class="entry-date">{{entry.displayDate}}</text>
             <text class="entry-preview">{{entry.preview}}</text>
@@ -49,9 +54,9 @@
   </block>
 
   <view class="empty-state" wx:elif="{{!loading}}">
-    <text class="empty-emoji">📓</text>
-    <text class="empty-text">还没有日记</text>
-    <text class="empty-sub">点击右下角按钮写下今天</text>
+    <text class="empty-emoji">🌱</text>
+    <text class="empty-text">今天，怎么样？</text>
+    <text class="empty-sub">不用写很多，一句话也好。\n把今天的感受留下来，只给自己看。</text>
   </view>
 
   <view class="bottom-spacer"></view>

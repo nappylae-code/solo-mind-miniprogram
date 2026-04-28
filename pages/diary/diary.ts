@@ -36,6 +36,19 @@ function getPreview(content: string): string {
     : content;
 }
 
+// ============================================
+// 日期工具：dateKey 往前推一天
+// ============================================
+function getPrevDateKey(dateKey: string): string {
+  const parts = dateKey.split('-');
+  const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// ============================================
+// interfaces
+// ============================================
 // ✅ moodImage / moodKey 完全移除
 interface DiaryItem {
   date: string;
@@ -50,6 +63,42 @@ interface MonthGroup {
   entries: DiaryItem[];
 }
 
+interface SummaryData {
+  totalCount: number;    // 共 X 篇日记
+  streakDays: number;    // 连续记日记 X 天
+  hasData: boolean;      // 是否有日记，false 时不渲染摘要栏
+}
+
+// ============================================
+// 统计摘要计算
+// 纯计算函数，零 Cloud / Storage 访问
+// ============================================
+function calcSummary(entries: DiaryItem[]): SummaryData {
+  const totalCount = entries.length;
+
+  if (totalCount === 0) {
+    return { totalCount: 0, streakDays: 0, hasData: false };
+  }
+
+  // 所有日期存入 Set，O(1) 查找
+  const dateSet = new Set(entries.map(e => e.date));
+
+  // 从最近一篇日记的日期往前连续计数
+  const latestDate = entries.map(e => e.date).sort().reverse()[0];
+  let current = latestDate;
+  let streakDays = 0;
+
+  while (dateSet.has(current)) {
+    streakDays++;
+    current = getPrevDateKey(current);
+  }
+
+  return { totalCount, streakDays, hasData: true };
+}
+
+// ============================================
+// Page
+// ============================================
 Page({
   data: {
     userId: null as string | null,
@@ -58,6 +107,11 @@ Page({
     monthGroups: [] as MonthGroup[],
     searchKeyword: '',
     // ✅ activeMoodFilter / moodFilters 完全移除
+    summary: {
+      totalCount: 0,
+      streakDays: 0,
+      hasData: false,
+    } as SummaryData,
   },
 
   onLoad() {},
@@ -78,7 +132,8 @@ Page({
     const cached = loadDiaryFromCache();
     if (cached) {
       const list = this.buildDiaryList(cached);
-      this.setData({ allEntries: list, loading: false });
+      const summary = calcSummary(list);
+      this.setData({ allEntries: list, summary, loading: false });
       this.applyFilter();
     }
 
@@ -92,7 +147,8 @@ Page({
       try {
         const entries = await loadDiaryFromCloud(userId);
         const list = this.buildDiaryList(entries);
-        this.setData({ allEntries: list });
+        const summary = calcSummary(list);
+        this.setData({ allEntries: list, summary });
         this.applyFilter();
       } catch (e) {
         wx.showToast({ title: '加载失败', icon: 'none' });
